@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Truck, Package, Users, DollarSign, Clock, CheckCircle, XCircle, RefreshCw, Lock, BarChart3, MapPin, Calendar } from "lucide-react"
+import { useState } from "react"
+import { Truck, Package, Users, DollarSign, RefreshCw, Lock, BarChart3, MapPin, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
-import type { Delivery, Driver, Shipper, AdminStats } from "@/types"
+import type { Delivery, Driver, Shipper } from "@/types"
 
 // ── Auth guard ─────────────────────────────────────────────────────────────
 function LoginScreen({ onLogin }: { onLogin: () => void }) {
@@ -52,7 +52,7 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
   )
 }
 
-// ── Stat card ──────────────────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────
 function StatCard({ label, value, icon: Icon, color, sub }: {
   label: string; value: string | number; icon: React.ElementType; color: string; sub?: string
 }) {
@@ -70,47 +70,85 @@ function StatCard({ label, value, icon: Icon, color, sub }: {
   )
 }
 
-// ── Status badge ───────────────────────────────────────────────────────────
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
-    pending: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-    "in-transit": "bg-blue-500/20 text-blue-400 border-blue-500/30",
     available: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
     assigned: "bg-purple-500/20 text-purple-400 border-purple-500/30",
-    delivered: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+    "in-transit": "bg-blue-500/20 text-blue-400 border-blue-500/30",
+    completed: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
     cancelled: "bg-red-500/20 text-red-400 border-red-500/30",
-    scheduled: "bg-purple-500/20 text-purple-400 border-purple-500/30",
   }
   return (
     <Badge className={`text-xs border ${map[status] ?? "bg-slate-800 text-slate-400 border-slate-700"}`}>
-      {status.replace("_", " ")}
+      {status}
     </Badge>
   )
 }
 
-// ── Placeholder data generators ────────────────────────────────────────────
+// ── Placeholder data ────────────────────────────────────────────────────────
+function makeLocation(city: string, state: string) {
+  return { address: "123 Main St", city, state: state as "SC" | "NC" | "GA", zip: "29000", lat: 0, lng: 0 }
+}
+
 function placeholderDeliveries(): Delivery[] {
   return [
-    { id: "d001", from: "Columbia, SC", to: "Charlotte, NC", distance: 95, vehicleType: "cargo-van", status: "in-transit", earnings: 153.75, scheduledAt: new Date("2026-06-29T09:00:00"), createdAt: new Date("2026-06-28") },
-    { id: "d002", from: "Raleigh, NC", to: "Greenville, SC", distance: 120, vehicleType: "sprinter-van", status: "available", earnings: 265.00, scheduledAt: new Date("2026-06-30T14:00:00"), createdAt: new Date("2026-06-29") },
-    { id: "d003", from: "Atlanta, GA", to: "Spartanburg, SC", distance: 200, vehicleType: "sprinter-van", status: "completed", earnings: 405.00, scheduledAt: new Date("2026-06-28T07:00:00"), createdAt: new Date("2026-06-27") },
-    { id: "d004", from: "Augusta, GA", to: "Columbia, SC", distance: 75, vehicleType: "cargo-van", status: "assigned", earnings: 128.75, scheduledAt: new Date("2026-07-01T11:00:00"), createdAt: new Date("2026-06-29") },
-    { id: "d005", from: "Durham, NC", to: "Myrtle Beach, SC", distance: 185, vehicleType: "cargo-van", status: "available", earnings: 266.25, scheduledAt: new Date("2026-07-02T08:00:00"), createdAt: new Date("2026-06-29") },
+    {
+      id: "d001", shipperId: "s1", shipperName: "LowCountry Freight", vehicleType: "cargo-van",
+      pickup: makeLocation("Columbia", "SC"), dropoff: makeLocation("Charlotte", "NC"),
+      pickupDate: "2026-06-29", pickupTime: "09:00", deliveryDate: "2026-06-29", deliveryTime: "13:00",
+      distance: 95, baseFee: 35, mileageRate: 1.25, mileageCost: 118.75, totalCost: 153.75,
+      platformFee: 15.38, driverPayout: 138.37, description: "Office supplies",
+      isScheduled: false, isUrgent: false, postedAt: new Date(), expiresAt: new Date(),
+      status: "in-transit",
+    },
+    {
+      id: "d002", shipperId: "s2", shipperName: "Piedmont Wholesale", vehicleType: "sprinter-van",
+      pickup: makeLocation("Raleigh", "NC"), dropoff: makeLocation("Greenville", "SC"),
+      pickupDate: "2026-06-30", pickupTime: "14:00", deliveryDate: "2026-06-30", deliveryTime: "19:00",
+      distance: 120, baseFee: 55, mileageRate: 1.75, mileageCost: 210, totalCost: 265,
+      platformFee: 26.5, driverPayout: 238.5, description: "Wholesale goods",
+      isScheduled: false, isUrgent: false, postedAt: new Date(), expiresAt: new Date(),
+      status: "available",
+    },
+    {
+      id: "d003", shipperId: "s1", shipperName: "LowCountry Freight", vehicleType: "sprinter-van",
+      pickup: makeLocation("Atlanta", "GA"), dropoff: makeLocation("Spartanburg", "SC"),
+      pickupDate: "2026-06-28", pickupTime: "07:00", deliveryDate: "2026-06-28", deliveryTime: "12:00",
+      distance: 200, baseFee: 55, mileageRate: 1.75, mileageCost: 350, totalCost: 405,
+      platformFee: 40.5, driverPayout: 364.5, description: "Auto parts",
+      isScheduled: false, isUrgent: false, postedAt: new Date(), expiresAt: new Date(),
+      status: "completed",
+    },
   ]
 }
 
 function placeholderDrivers(): Driver[] {
   return [
-    { id: "drv001", name: "Marcus T.", email: "marcus@example.com", phone: "843-555-0101", vehicleType: "sprinter-van", state: "SC", rating: 4.9, totalDeliveries: 87, totalEarnings: 14200, isActive: true },
-    { id: "drv002", name: "Raymond K.", email: "raymond@example.com", phone: "704-555-0202", vehicleType: "cargo-van", state: "NC", rating: 4.7, totalDeliveries: 43, totalEarnings: 6800, isActive: true },
-    { id: "drv003", name: "Deja W.", email: "deja@example.com", phone: "404-555-0303", vehicleType: "cargo-van", state: "GA", rating: 5.0, totalDeliveries: 22, totalEarnings: 3400, isActive: false },
+    {
+      id: "drv001", name: "Marcus T.", email: "marcus@example.com", phone: "843-555-0101",
+      vehicleType: "sprinter-van", vehicleYear: "2022", vehicleMake: "Mercedes", vehicleModel: "Sprinter",
+      licensePlate: "SC-1234", rating: 4.9, completedDeliveries: 87, totalEarnings: 14200,
+      isAvailable: true, currentCity: "Columbia", currentState: "SC", joinedDate: "2025-01-10",
+    },
+    {
+      id: "drv002", name: "Raymond K.", email: "raymond@example.com", phone: "704-555-0202",
+      vehicleType: "cargo-van", vehicleYear: "2021", vehicleMake: "Ford", vehicleModel: "Transit",
+      licensePlate: "NC-5678", rating: 4.7, completedDeliveries: 43, totalEarnings: 6800,
+      isAvailable: true, currentCity: "Charlotte", currentState: "NC", joinedDate: "2025-03-15",
+    },
+    {
+      id: "drv003", name: "Deja W.", email: "deja@example.com", phone: "404-555-0303",
+      vehicleType: "cargo-van", vehicleYear: "2020", vehicleMake: "Chevy", vehicleModel: "Express",
+      licensePlate: "GA-9012", rating: 5.0, completedDeliveries: 22, totalEarnings: 3400,
+      isAvailable: false, currentCity: "Atlanta", currentState: "GA", joinedDate: "2025-05-20",
+    },
   ]
 }
 
 function placeholderShippers(): Shipper[] {
   return [
-    { id: "shp001", name: "LowCountry Freight LLC", email: "ops@lcfreight.com", phone: "843-555-0401", company: "LowCountry Freight", totalPosted: 18, totalSpent: 4280, isActive: true },
-    { id: "shp002", name: "Piedmont Wholesale", email: "ship@piedmontwholesale.com", phone: "704-555-0502", company: "Piedmont Wholesale", totalPosted: 9, totalSpent: 2100, isActive: true },
+    { id: "shp001", name: "LowCountry Freight LLC", email: "ops@lcfreight.com", phone: "843-555-0401", company: "LowCountry Freight", totalDeliveries: 18, totalSpent: 4280, rating: 4.8 },
+    { id: "shp002", name: "Piedmont Wholesale", email: "ship@piedmontwholesale.com", phone: "704-555-0502", company: "Piedmont Wholesale", totalDeliveries: 9, totalSpent: 2100, rating: 4.6 },
   ]
 }
 
@@ -128,15 +166,15 @@ const WEEKLY_CHART = [
 export default function AdminPage() {
   const [authed, setAuthed] = useState(false)
   const [tab, setTab] = useState<"overview" | "deliveries" | "drivers" | "shippers">("overview")
-  const [loading, setLoading] = useState(false)
+  const [spinning, setSpinning] = useState(false)
 
   const deliveries = placeholderDeliveries()
   const drivers = placeholderDrivers()
   const shippers = placeholderShippers()
 
-  const totalRevenue = deliveries.filter(d => d.status === "completed").reduce((s, d) => s + (d.earnings ?? 0), 0)
+  const totalRevenue = deliveries.filter(d => d.status === "completed").reduce((s, d) => s + d.driverPayout, 0)
   const activeLoads = deliveries.filter(d => d.status === "in-transit" || d.status === "available").length
-  const activeDrivers = drivers.filter(d => d.isActive).length
+  const activeDrivers = drivers.filter(d => d.isAvailable).length
 
   if (!authed) return <LoginScreen onLogin={() => setAuthed(true)} />
 
@@ -157,10 +195,10 @@ export default function AdminPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setLoading(l => !l)}
+            onClick={() => { setSpinning(true); setTimeout(() => setSpinning(false), 800) }}
             className="text-slate-400 hover:text-white gap-2"
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`h-4 w-4 ${spinning ? "animate-spin" : ""}`} />
             Refresh
           </Button>
         </div>
@@ -168,12 +206,12 @@ export default function AdminPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Tabs */}
-        <div className="flex gap-1 bg-slate-900 border border-slate-800 rounded-xl p-1 w-fit">
+        <div className="flex gap-1 bg-slate-900 border border-slate-800 rounded-xl p-1 w-fit overflow-x-auto">
           {(["overview", "deliveries", "drivers", "shippers"] as const).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-all ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-all whitespace-nowrap ${
                 tab === t ? "bg-orange-500 text-white" : "text-slate-400 hover:text-white hover:bg-slate-800"
               }`}
             >
@@ -186,9 +224,9 @@ export default function AdminPage() {
         {tab === "overview" && (
           <div className="space-y-6">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard label="Active Loads" value={activeLoads} icon={Package} color="text-orange-400" sub="pending + in transit" />
-              <StatCard label="Active Drivers" value={activeDrivers} icon={Users} color="text-blue-400" sub="this week" />
-              <StatCard label="Revenue (Delivered)" value={`$${totalRevenue.toFixed(2)}`} icon={DollarSign} color="text-emerald-400" sub="all time" />
+              <StatCard label="Active Loads" value={activeLoads} icon={Package} color="text-orange-400" sub="available + in-transit" />
+              <StatCard label="Available Drivers" value={activeDrivers} icon={Users} color="text-blue-400" sub="online now" />
+              <StatCard label="Revenue Paid Out" value={`$${totalRevenue.toFixed(2)}`} icon={DollarSign} color="text-emerald-400" sub="completed routes" />
               <StatCard label="Total Shippers" value={shippers.length} icon={BarChart3} color="text-purple-400" sub="registered" />
             </div>
 
@@ -241,7 +279,7 @@ export default function AdminPage() {
                 <table className="w-full text-sm">
                   <thead className="bg-slate-800/50">
                     <tr>
-                      {["ID", "From", "To", "Distance", "Vehicle", "Earnings", "Pickup", "Status"].map(h => (
+                      {["ID", "Pickup", "Dropoff", "Dist", "Vehicle", "Payout", "Date", "Status"].map(h => (
                         <th key={h} className="px-4 py-3 text-left text-slate-400 font-medium whitespace-nowrap">{h}</th>
                       ))}
                     </tr>
@@ -251,22 +289,19 @@ export default function AdminPage() {
                       <tr key={d.id} className="hover:bg-slate-800/30 transition-colors">
                         <td className="px-4 py-3 font-mono text-slate-400 text-xs">{d.id}</td>
                         <td className="px-4 py-3 whitespace-nowrap">
-                          <span className="flex items-center gap-1"><MapPin className="h-3 w-3 text-slate-500" />{d.from}</span>
+                          <span className="flex items-center gap-1"><MapPin className="h-3 w-3 text-slate-500" />{d.pickup.city}, {d.pickup.state}</span>
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
-                          <span className="flex items-center gap-1"><MapPin className="h-3 w-3 text-orange-400" />{d.to}</span>
+                          <span className="flex items-center gap-1"><MapPin className="h-3 w-3 text-orange-400" />{d.dropoff.city}, {d.dropoff.state}</span>
                         </td>
                         <td className="px-4 py-3 text-slate-300">{d.distance} mi</td>
                         <td className="px-4 py-3">
-                          <Badge className="bg-slate-800 text-slate-300 border-slate-700 text-xs">
-                            {d.vehicleType?.replace("_", " ")}
-                          </Badge>
+                          <Badge className="bg-slate-800 text-slate-300 border-slate-700 text-xs">{d.vehicleType}</Badge>
                         </td>
-                        <td className="px-4 py-3 text-emerald-400 font-bold">${d.earnings?.toFixed(2)}</td>
+                        <td className="px-4 py-3 text-emerald-400 font-bold">${d.driverPayout.toFixed(2)}</td>
                         <td className="px-4 py-3 text-slate-400 whitespace-nowrap">
                           <span className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {d.scheduledAt ? new Date(d.scheduledAt).toLocaleDateString() : "—"}
+                            <Calendar className="h-3 w-3" />{d.pickupDate}
                           </span>
                         </td>
                         <td className="px-4 py-3"><StatusBadge status={d.status} /></td>
@@ -293,18 +328,18 @@ export default function AdminPage() {
                       </div>
                       <div>
                         <p className="font-bold text-white">{d.name}</p>
-                        <p className="text-slate-500 text-xs">{d.state} · {d.vehicleType?.replace("_", " ")}</p>
+                        <p className="text-slate-500 text-xs">{d.currentCity}, {d.currentState} · {d.vehicleType}</p>
                       </div>
                     </div>
-                    {d.isActive
-                      ? <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">Active</Badge>
-                      : <Badge className="bg-slate-800 text-slate-400 border-slate-700 text-xs">Inactive</Badge>}
+                    {d.isAvailable
+                      ? <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">Available</Badge>
+                      : <Badge className="bg-slate-800 text-slate-400 border-slate-700 text-xs">Offline</Badge>}
                   </div>
                   <div className="grid grid-cols-3 gap-2">
                     {[
-                      { label: "Rating", value: d.rating?.toFixed(1) ?? "—" },
-                      { label: "Deliveries", value: d.totalDeliveries ?? 0 },
-                      { label: "Earnings", value: `$${((d.totalEarnings ?? 0) / 1000).toFixed(1)}k` },
+                      { label: "Rating", value: d.rating.toFixed(1) },
+                      { label: "Deliveries", value: d.completedDeliveries },
+                      { label: "Earnings", value: `$${(d.totalEarnings / 1000).toFixed(1)}k` },
                     ].map(({ label, value }) => (
                       <div key={label} className="bg-slate-800 rounded-lg p-2 text-center">
                         <p className="text-white font-bold text-sm">{value}</p>
@@ -315,6 +350,7 @@ export default function AdminPage() {
                   <div className="text-slate-400 text-xs space-y-1">
                     <p>{d.email}</p>
                     <p>{d.phone}</p>
+                    <p className="text-slate-500">{d.vehicleYear} {d.vehicleMake} {d.vehicleModel} · {d.licensePlate}</p>
                   </div>
                 </div>
               ))}
@@ -334,18 +370,20 @@ export default function AdminPage() {
                       <p className="font-bold text-white text-lg">{s.company ?? s.name}</p>
                       <p className="text-slate-400 text-sm">{s.name}</p>
                     </div>
-                    {s.isActive
-                      ? <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">Active</Badge>
-                      : <Badge className="bg-slate-800 text-slate-400 border-slate-700">Inactive</Badge>}
+                    <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">Active</Badge>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-3 gap-3">
                     <div className="bg-slate-800 rounded-xl p-3 text-center">
-                      <p className="text-white font-bold">{s.totalPosted ?? 0}</p>
-                      <p className="text-slate-500 text-xs">Loads Posted</p>
+                      <p className="text-white font-bold">{s.totalDeliveries}</p>
+                      <p className="text-slate-500 text-xs">Loads</p>
                     </div>
                     <div className="bg-slate-800 rounded-xl p-3 text-center">
-                      <p className="text-emerald-400 font-bold">${(s.totalSpent ?? 0).toLocaleString()}</p>
+                      <p className="text-emerald-400 font-bold">${s.totalSpent.toLocaleString()}</p>
                       <p className="text-slate-500 text-xs">Total Spent</p>
+                    </div>
+                    <div className="bg-slate-800 rounded-xl p-3 text-center">
+                      <p className="text-yellow-400 font-bold">{s.rating.toFixed(1)}</p>
+                      <p className="text-slate-500 text-xs">Rating</p>
                     </div>
                   </div>
                   <div className="text-slate-400 text-xs space-y-1">
