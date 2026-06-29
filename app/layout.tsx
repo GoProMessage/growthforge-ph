@@ -1,33 +1,23 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
+import type { Metadata } from "next"
+import { Inter } from "next/font/google"
+import "./globals.css"
+import { LandingNav } from "@/components/landing-nav"
 
-// All pages in this app use client-side libraries (charts, animations, maps).
-// Force dynamic rendering to skip static pre-generation and avoid RSC
-// serialization issues with those packages.
-export const dynamic = "force-dynamic";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
 
 export const metadata: Metadata = {
-  title: "GrowthForge PH | Digital Growth Agency for Philippine SMBs",
+  title: "NegosyoAI — AI-Powered Growth Tools for Filipino Entrepreneurs",
   description:
-    "We help small and medium-sized businesses in the Philippines grow their brand online through lead generation, web design, reputation management, and more.",
-};
+    "AI-powered SEO audits, content generation, website builder, and GCash/Maya payments — everything Filipino SMEs need to grow to ₱168K+/month.",
+}
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="scroll-smooth">
-      <body className={`${inter.variable} font-sans antialiased bg-white`}>
+      <body className={`${inter.variable} font-sans bg-white text-gray-900 antialiased`}>
+        <LandingNav />
         {children}
       </body>
     </html>
-  );
+  )
 }
