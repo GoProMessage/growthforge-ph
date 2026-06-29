@@ -74,7 +74,9 @@ function StatCard({ label, value, icon: Icon, color, sub }: {
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
     pending: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-    in_transit: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+    "in-transit": "bg-blue-500/20 text-blue-400 border-blue-500/30",
+    available: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+    assigned: "bg-purple-500/20 text-purple-400 border-purple-500/30",
     delivered: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
     cancelled: "bg-red-500/20 text-red-400 border-red-500/30",
     scheduled: "bg-purple-500/20 text-purple-400 border-purple-500/30",
@@ -89,19 +91,19 @@ function StatusBadge({ status }: { status: string }) {
 // ── Placeholder data generators ────────────────────────────────────────────
 function placeholderDeliveries(): Delivery[] {
   return [
-    { id: "d001", from: "Columbia, SC", to: "Charlotte, NC", distance: 95, vehicleType: "cargo_van", status: "in_transit", earnings: 153.75, scheduledAt: new Date("2026-06-29T09:00:00"), createdAt: new Date("2026-06-28") },
-    { id: "d002", from: "Raleigh, NC", to: "Greenville, SC", distance: 120, vehicleType: "sprinter_van", status: "pending", earnings: 265.00, scheduledAt: new Date("2026-06-30T14:00:00"), createdAt: new Date("2026-06-29") },
-    { id: "d003", from: "Atlanta, GA", to: "Spartanburg, SC", distance: 200, vehicleType: "sprinter_van", status: "delivered", earnings: 405.00, scheduledAt: new Date("2026-06-28T07:00:00"), createdAt: new Date("2026-06-27") },
-    { id: "d004", from: "Augusta, GA", to: "Columbia, SC", distance: 75, vehicleType: "cargo_van", status: "scheduled", earnings: 128.75, scheduledAt: new Date("2026-07-01T11:00:00"), createdAt: new Date("2026-06-29") },
-    { id: "d005", from: "Durham, NC", to: "Myrtle Beach, SC", distance: 185, vehicleType: "cargo_van", status: "pending", earnings: 266.25, scheduledAt: new Date("2026-07-02T08:00:00"), createdAt: new Date("2026-06-29") },
+    { id: "d001", from: "Columbia, SC", to: "Charlotte, NC", distance: 95, vehicleType: "cargo-van", status: "in-transit", earnings: 153.75, scheduledAt: new Date("2026-06-29T09:00:00"), createdAt: new Date("2026-06-28") },
+    { id: "d002", from: "Raleigh, NC", to: "Greenville, SC", distance: 120, vehicleType: "sprinter-van", status: "available", earnings: 265.00, scheduledAt: new Date("2026-06-30T14:00:00"), createdAt: new Date("2026-06-29") },
+    { id: "d003", from: "Atlanta, GA", to: "Spartanburg, SC", distance: 200, vehicleType: "sprinter-van", status: "completed", earnings: 405.00, scheduledAt: new Date("2026-06-28T07:00:00"), createdAt: new Date("2026-06-27") },
+    { id: "d004", from: "Augusta, GA", to: "Columbia, SC", distance: 75, vehicleType: "cargo-van", status: "assigned", earnings: 128.75, scheduledAt: new Date("2026-07-01T11:00:00"), createdAt: new Date("2026-06-29") },
+    { id: "d005", from: "Durham, NC", to: "Myrtle Beach, SC", distance: 185, vehicleType: "cargo-van", status: "available", earnings: 266.25, scheduledAt: new Date("2026-07-02T08:00:00"), createdAt: new Date("2026-06-29") },
   ]
 }
 
 function placeholderDrivers(): Driver[] {
   return [
-    { id: "drv001", name: "Marcus T.", email: "marcus@example.com", phone: "843-555-0101", vehicleType: "sprinter_van", state: "SC", rating: 4.9, totalDeliveries: 87, totalEarnings: 14200, isActive: true },
-    { id: "drv002", name: "Raymond K.", email: "raymond@example.com", phone: "704-555-0202", vehicleType: "cargo_van", state: "NC", rating: 4.7, totalDeliveries: 43, totalEarnings: 6800, isActive: true },
-    { id: "drv003", name: "Deja W.", email: "deja@example.com", phone: "404-555-0303", vehicleType: "cargo_van", state: "GA", rating: 5.0, totalDeliveries: 22, totalEarnings: 3400, isActive: false },
+    { id: "drv001", name: "Marcus T.", email: "marcus@example.com", phone: "843-555-0101", vehicleType: "sprinter-van", state: "SC", rating: 4.9, totalDeliveries: 87, totalEarnings: 14200, isActive: true },
+    { id: "drv002", name: "Raymond K.", email: "raymond@example.com", phone: "704-555-0202", vehicleType: "cargo-van", state: "NC", rating: 4.7, totalDeliveries: 43, totalEarnings: 6800, isActive: true },
+    { id: "drv003", name: "Deja W.", email: "deja@example.com", phone: "404-555-0303", vehicleType: "cargo-van", state: "GA", rating: 5.0, totalDeliveries: 22, totalEarnings: 3400, isActive: false },
   ]
 }
 
@@ -132,8 +134,8 @@ export default function AdminPage() {
   const drivers = placeholderDrivers()
   const shippers = placeholderShippers()
 
-  const totalRevenue = deliveries.filter(d => d.status === "delivered").reduce((s, d) => s + (d.earnings ?? 0), 0)
-  const activeLoads = deliveries.filter(d => d.status === "in_transit" || d.status === "pending").length
+  const totalRevenue = deliveries.filter(d => d.status === "completed").reduce((s, d) => s + (d.earnings ?? 0), 0)
+  const activeLoads = deliveries.filter(d => d.status === "in-transit" || d.status === "available").length
   const activeDrivers = drivers.filter(d => d.isActive).length
 
   if (!authed) return <LoginScreen onLogin={() => setAuthed(true)} />
