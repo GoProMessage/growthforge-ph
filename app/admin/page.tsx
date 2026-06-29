@@ -1,433 +1,361 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Truck, Package, Users, DollarSign, Clock, CheckCircle, XCircle, RefreshCw, Lock, BarChart3, MapPin, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import {
-  BarChart, Bar, AreaChart, Area,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-} from "recharts"
-import {
-  Zap, Users, DollarSign, FileSearch, TrendingUp,
-  Shield, Search, Mail, Phone, Calendar, CreditCard,
-  CheckCircle, Clock, AlertCircle,
-} from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
+import type { Delivery, Driver, Shipper, AdminStats } from "@/types"
 
-const ADMIN_KEY = "negosyo2024"
+// ── Auth guard ─────────────────────────────────────────────────────────────
+function LoginScreen({ onLogin }: { onLogin: () => void }) {
+  const [pw, setPw] = useState("")
+  const [err, setErr] = useState(false)
 
-const MONTHLY_LEADS = [
-  { month: "Jan", leads: 12, audits: 8 },
-  { month: "Feb", leads: 18, audits: 14 },
-  { month: "Mar", leads: 25, audits: 20 },
-  { month: "Apr", leads: 32, audits: 27 },
-  { month: "May", leads: 28, audits: 23 },
-  { month: "Jun", leads: 41, audits: 35 },
-]
-
-const MONTHLY_REVENUE = [
-  { month: "Jan", revenue: 44850 },
-  { month: "Feb", revenue: 53820 },
-  { month: "Mar", revenue: 74730 },
-  { month: "Apr", revenue: 95760 },
-  { month: "May", revenue: 83820 },
-  { month: "Jun", revenue: 122730 },
-]
-
-const STATUS_BADGE: Record<string, string> = {
-  new:        "bg-blue-500/20 text-blue-300 border-blue-500/30",
-  contacted:  "bg-yellow-500/20 text-yellow-300 border-yellow-500/30",
-  converted:  "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
-  inactive:   "bg-slate-500/20 text-slate-400 border-slate-500/30",
-}
-
-const PLAN_BADGE: Record<string, string> = {
-  Starter: "bg-slate-500/20 text-slate-300 border-slate-500/30",
-  Growth:  "bg-blue-500/20 text-blue-300 border-blue-500/30",
-  Pro:     "bg-amber-500/20 text-amber-300 border-amber-500/30",
-}
-
-// ── AdminGate ──────────────────────────────────────────────────────────────
-function AdminGate({ onAuth }: { onAuth: () => void }) {
-  const [key, setKey] = useState("")
-  const [error, setError] = useState(false)
-
-  const attempt = () => {
-    if (key === ADMIN_KEY) { onAuth() }
-    else { setError(true); setTimeout(() => setError(false), 1500) }
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (pw === "vanroute2024") { onLogin() }
+    else { setErr(true); setTimeout(() => setErr(false), 2000) }
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-slate-900 border border-slate-800 rounded-2xl p-10 w-full max-w-sm text-center space-y-6"
-      >
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-500/20 border border-blue-500/30 mx-auto">
-          <Zap className="h-8 w-8 text-blue-400" />
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+      <div className="w-full max-w-sm space-y-6">
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-orange-500/20 border border-orange-500/30 mb-2">
+            <Truck className="h-7 w-7 text-orange-400" />
+          </div>
+          <h1 className="text-2xl font-extrabold text-white">VanRoute Pro</h1>
+          <p className="text-slate-400 text-sm">Admin Dashboard</p>
         </div>
-        <div>
-          <h1 className="text-white font-bold text-xl">NegosyoAI Admin</h1>
-          <p className="text-slate-500 text-sm mt-1">Leads · Audits · Revenue</p>
-        </div>
-        <div className="space-y-3">
-          <Input
-            type="password"
-            placeholder="Enter admin key"
-            value={key}
-            onChange={e => setKey(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && attempt()}
-            className={`bg-slate-800 border-slate-700 text-white placeholder-slate-500 ${error ? "border-red-500" : ""}`}
-          />
-          {error && <p className="text-red-400 text-xs">Incorrect key</p>}
-          <Button onClick={attempt} className="w-full bg-blue-600 hover:bg-blue-500">
-            <Shield className="h-4 w-4 mr-2" /> Access Dashboard
+        <form onSubmit={handleSubmit} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+          <div>
+            <label className="block text-sm text-slate-400 mb-1.5">Password</label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+              <input
+                type="password"
+                value={pw}
+                onChange={e => setPw(e.target.value)}
+                placeholder="Enter admin password"
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+              />
+            </div>
+            {err && <p className="text-red-400 text-xs mt-1">Incorrect password</p>}
+          </div>
+          <Button type="submit" className="w-full bg-orange-500 hover:bg-orange-400 text-white font-bold">
+            Sign In
           </Button>
-        </div>
-      </motion.div>
+        </form>
+      </div>
     </div>
   )
 }
 
-// ── Main Dashboard ─────────────────────────────────────────────────────────
-function AdminDashboard() {
-  const [search, setSearch] = useState("")
-  const [leads, setLeads] = useState<any[]>([])
-  const [payments, setPayments] = useState<any[]>([])
-  const [audits, setAudits] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    Promise.all([
-      fetch("/api/leads").then(r => r.json()).catch(() => []),
-      fetch("/api/payments").then(r => r.json()).catch(() => []),
-      fetch("/api/audit").then(r => r.json()).catch(() => []),
-    ]).then(([l, p, a]) => {
-      setLeads(Array.isArray(l) ? l : [])
-      setPayments(Array.isArray(p) ? p : [])
-      setAudits(Array.isArray(a) ? a : [])
-      setLoading(false)
-    })
-  }, [])
-
-  const totalRevenue = payments.reduce((s: number, p: any) => s + (p.amount || 0), 0)
-  const filteredLeads = leads.filter((l: any) =>
-    search === "" ||
-    (l.name || "").toLowerCase().includes(search.toLowerCase()) ||
-    (l.email || "").toLowerCase().includes(search.toLowerCase()) ||
-    (l.business || "").toLowerCase().includes(search.toLowerCase())
+// ── Stat card ──────────────────────────────────────────────────────────────
+function StatCard({ label, value, icon: Icon, color, sub }: {
+  label: string; value: string | number; icon: React.ElementType; color: string; sub?: string
+}) {
+  return (
+    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-slate-400 text-sm">{label}</p>
+        <div className={`p-2 rounded-lg ${color.replace("text-", "bg-").replace("400", "500/20")}`}>
+          <Icon className={`h-4 w-4 ${color}`} />
+        </div>
+      </div>
+      <p className="text-2xl font-extrabold text-white">{value}</p>
+      {sub && <p className="text-slate-500 text-xs mt-1">{sub}</p>}
+    </div>
   )
+}
+
+// ── Status badge ───────────────────────────────────────────────────────────
+function StatusBadge({ status }: { status: string }) {
+  const map: Record<string, string> = {
+    pending: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+    in_transit: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+    delivered: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+    cancelled: "bg-red-500/20 text-red-400 border-red-500/30",
+    scheduled: "bg-purple-500/20 text-purple-400 border-purple-500/30",
+  }
+  return (
+    <Badge className={`text-xs border ${map[status] ?? "bg-slate-800 text-slate-400 border-slate-700"}`}>
+      {status.replace("_", " ")}
+    </Badge>
+  )
+}
+
+// ── Placeholder data generators ────────────────────────────────────────────
+function placeholderDeliveries(): Delivery[] {
+  return [
+    { id: "d001", from: "Columbia, SC", to: "Charlotte, NC", distance: 95, vehicleType: "cargo_van", status: "in_transit", earnings: 153.75, scheduledAt: new Date("2026-06-29T09:00:00"), createdAt: new Date("2026-06-28") },
+    { id: "d002", from: "Raleigh, NC", to: "Greenville, SC", distance: 120, vehicleType: "sprinter_van", status: "pending", earnings: 265.00, scheduledAt: new Date("2026-06-30T14:00:00"), createdAt: new Date("2026-06-29") },
+    { id: "d003", from: "Atlanta, GA", to: "Spartanburg, SC", distance: 200, vehicleType: "sprinter_van", status: "delivered", earnings: 405.00, scheduledAt: new Date("2026-06-28T07:00:00"), createdAt: new Date("2026-06-27") },
+    { id: "d004", from: "Augusta, GA", to: "Columbia, SC", distance: 75, vehicleType: "cargo_van", status: "scheduled", earnings: 128.75, scheduledAt: new Date("2026-07-01T11:00:00"), createdAt: new Date("2026-06-29") },
+    { id: "d005", from: "Durham, NC", to: "Myrtle Beach, SC", distance: 185, vehicleType: "cargo_van", status: "pending", earnings: 266.25, scheduledAt: new Date("2026-07-02T08:00:00"), createdAt: new Date("2026-06-29") },
+  ]
+}
+
+function placeholderDrivers(): Driver[] {
+  return [
+    { id: "drv001", name: "Marcus T.", email: "marcus@example.com", phone: "843-555-0101", vehicleType: "sprinter_van", state: "SC", rating: 4.9, totalDeliveries: 87, totalEarnings: 14200, isActive: true },
+    { id: "drv002", name: "Raymond K.", email: "raymond@example.com", phone: "704-555-0202", vehicleType: "cargo_van", state: "NC", rating: 4.7, totalDeliveries: 43, totalEarnings: 6800, isActive: true },
+    { id: "drv003", name: "Deja W.", email: "deja@example.com", phone: "404-555-0303", vehicleType: "cargo_van", state: "GA", rating: 5.0, totalDeliveries: 22, totalEarnings: 3400, isActive: false },
+  ]
+}
+
+function placeholderShippers(): Shipper[] {
+  return [
+    { id: "shp001", name: "LowCountry Freight LLC", email: "ops@lcfreight.com", phone: "843-555-0401", company: "LowCountry Freight", totalPosted: 18, totalSpent: 4280, isActive: true },
+    { id: "shp002", name: "Piedmont Wholesale", email: "ship@piedmontwholesale.com", phone: "704-555-0502", company: "Piedmont Wholesale", totalPosted: 9, totalSpent: 2100, isActive: true },
+  ]
+}
+
+const WEEKLY_CHART = [
+  { day: "Mon", deliveries: 8, revenue: 1240 },
+  { day: "Tue", deliveries: 12, revenue: 1890 },
+  { day: "Wed", deliveries: 7, revenue: 1020 },
+  { day: "Thu", deliveries: 15, revenue: 2340 },
+  { day: "Fri", deliveries: 18, revenue: 2800 },
+  { day: "Sat", deliveries: 11, revenue: 1680 },
+  { day: "Sun", deliveries: 5, revenue: 780 },
+]
+
+// ── Main dashboard ─────────────────────────────────────────────────────────
+export default function AdminPage() {
+  const [authed, setAuthed] = useState(false)
+  const [tab, setTab] = useState<"overview" | "deliveries" | "drivers" | "shippers">("overview")
+  const [loading, setLoading] = useState(false)
+
+  const deliveries = placeholderDeliveries()
+  const drivers = placeholderDrivers()
+  const shippers = placeholderShippers()
+
+  const totalRevenue = deliveries.filter(d => d.status === "delivered").reduce((s, d) => s + (d.earnings ?? 0), 0)
+  const activeLoads = deliveries.filter(d => d.status === "in_transit" || d.status === "pending").length
+  const activeDrivers = drivers.filter(d => d.isActive).length
+
+  if (!authed) return <LoginScreen onLogin={() => setAuthed(true)} />
 
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-slate-950 text-white">
       {/* Header */}
-      <div className="border-b border-slate-800 bg-slate-900/60 sticky top-0 z-30">
+      <div className="border-b border-slate-800 bg-slate-900/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Zap className="h-4 w-4 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-orange-500/20 border border-orange-500/30 flex items-center justify-center">
+              <Truck className="h-5 w-5 text-orange-400" />
             </div>
             <div>
-              <h1 className="text-white font-bold text-lg">NegosyoAI Admin</h1>
-              <p className="text-slate-500 text-xs">Philippines Growth Platform · Owner Access</p>
+              <h1 className="font-extrabold text-lg leading-none">VanRoute Pro Admin</h1>
+              <p className="text-slate-500 text-xs mt-0.5">SC · NC · GA Logistics Network</p>
             </div>
           </div>
-          <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            Live
-          </Badge>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setLoading(l => !l)}
+            className="text-slate-400 hover:text-white gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-
-        {/* KPI Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            { label: "Total Leads",    value: loading ? "—" : leads.length,                  icon: Users,       color: "text-blue-400",    bg: "bg-blue-500/10 border-blue-500/20" },
-            { label: "Audit Requests", value: loading ? "—" : audits.length,                 icon: FileSearch,  color: "text-amber-400",   bg: "bg-amber-500/10 border-amber-500/20" },
-            { label: "Payments",       value: loading ? "—" : payments.length,               icon: CreditCard,  color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20" },
-            { label: "Revenue (PHP)",  value: loading ? "—" : `₱${totalRevenue.toLocaleString()}`, icon: DollarSign,  color: "text-purple-400",  bg: "bg-purple-500/10 border-purple-500/20" },
-          ].map(({ label, value, icon: Icon, color, bg }) => (
-            <motion.div
-              key={label}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`rounded-xl border p-5 ${bg}`}
+        {/* Tabs */}
+        <div className="flex gap-1 bg-slate-900 border border-slate-800 rounded-xl p-1 w-fit">
+          {(["overview", "deliveries", "drivers", "shippers"] as const).map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-all ${
+                tab === t ? "bg-orange-500 text-white" : "text-slate-400 hover:text-white hover:bg-slate-800"
+              }`}
             >
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-slate-400 text-xs font-medium">{label}</p>
-                <Icon className={`h-4 w-4 ${color}`} />
-              </div>
-              <p className={`text-2xl font-bold ${color}`}>{value}</p>
-            </motion.div>
+              {t}
+            </button>
           ))}
         </div>
 
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="bg-slate-900 border-slate-800">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-white text-sm font-semibold flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-blue-400" /> Leads & Audits (6 months)
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={MONTHLY_LEADS}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                  <XAxis dataKey="month" stroke="#64748b" tick={{ fontSize: 11 }} />
-                  <YAxis stroke="#64748b" tick={{ fontSize: 11 }} />
-                  <Tooltip contentStyle={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: 8, fontSize: 12 }} />
-                  <Bar dataKey="leads" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Leads" />
-                  <Bar dataKey="audits" fill="#f59e0b" radius={[4, 4, 0, 0]} name="Audits" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+        {/* ── Overview ── */}
+        {tab === "overview" && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <StatCard label="Active Loads" value={activeLoads} icon={Package} color="text-orange-400" sub="pending + in transit" />
+              <StatCard label="Active Drivers" value={activeDrivers} icon={Users} color="text-blue-400" sub="this week" />
+              <StatCard label="Revenue (Delivered)" value={`$${totalRevenue.toFixed(2)}`} icon={DollarSign} color="text-emerald-400" sub="all time" />
+              <StatCard label="Total Shippers" value={shippers.length} icon={BarChart3} color="text-purple-400" sub="registered" />
+            </div>
 
-          <Card className="bg-slate-900 border-slate-800">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-white text-sm font-semibold flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-emerald-400" /> Monthly Revenue (PHP)
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={MONTHLY_REVENUE}>
-                  <defs>
-                    <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                  <XAxis dataKey="month" stroke="#64748b" tick={{ fontSize: 11 }} />
-                  <YAxis stroke="#64748b" tick={{ fontSize: 11 }} tickFormatter={v => `₱${(v / 1000).toFixed(0)}K`} />
-                  <Tooltip
-                    contentStyle={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: 8, fontSize: 12 }}
-                    formatter={(v: any) => [`₱${Number(v).toLocaleString()}`, "Revenue"]}
-                  />
-                  <Area type="monotone" dataKey="revenue" stroke="#10b981" fill="url(#revGrad)" strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                <h3 className="font-bold mb-4 flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-orange-400" /> Weekly Deliveries
+                </h3>
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={WEEKLY_CHART}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                    <XAxis dataKey="day" tick={{ fill: "#94a3b8", fontSize: 12 }} />
+                    <YAxis tick={{ fill: "#94a3b8", fontSize: 12 }} />
+                    <Tooltip contentStyle={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: 8 }} />
+                    <Bar dataKey="deliveries" fill="#f97316" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
 
-        {/* Data Tabs */}
-        <Tabs defaultValue="leads">
-          <TabsList className="bg-slate-800 border border-slate-700">
-            <TabsTrigger value="leads"   className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-400 text-xs">
-              Leads <Badge className="ml-1.5 bg-blue-500/20 text-blue-300 text-[10px] px-1.5">{leads.length}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="payments" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-400 text-xs">
-              Payments <Badge className="ml-1.5 bg-emerald-500/20 text-emerald-300 text-[10px] px-1.5">{payments.length}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="audits"  className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-400 text-xs">
-              Audits <Badge className="ml-1.5 bg-amber-500/20 text-amber-300 text-[10px] px-1.5">{audits.length}</Badge>
-            </TabsTrigger>
-          </TabsList>
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                <h3 className="font-bold mb-4 flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-emerald-400" /> Weekly Revenue
+                </h3>
+                <ResponsiveContainer width="100%" height={200}>
+                  <AreaChart data={WEEKLY_CHART}>
+                    <defs>
+                      <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                    <XAxis dataKey="day" tick={{ fill: "#94a3b8", fontSize: 12 }} />
+                    <YAxis tick={{ fill: "#94a3b8", fontSize: 12 }} />
+                    <Tooltip contentStyle={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: 8 }} />
+                    <Area type="monotone" dataKey="revenue" stroke="#10b981" fill="url(#revGrad)" strokeWidth={2} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        )}
 
-          {/* Leads Tab */}
-          <TabsContent value="leads" className="mt-4">
-            <Card className="bg-slate-900 border-slate-800">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-white text-sm">Contact Form Leads</CardTitle>
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-500" />
-                    <Input
-                      placeholder="Search leads..."
-                      value={search}
-                      onChange={e => setSearch(e.target.value)}
-                      className="pl-8 h-8 text-xs bg-slate-800 border-slate-700 text-white placeholder-slate-500 w-52"
-                    />
+        {/* ── Deliveries ── */}
+        {tab === "deliveries" && (
+          <div className="space-y-4">
+            <h2 className="font-extrabold text-xl">Deliveries ({deliveries.length})</h2>
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-800/50">
+                    <tr>
+                      {["ID", "From", "To", "Distance", "Vehicle", "Earnings", "Pickup", "Status"].map(h => (
+                        <th key={h} className="px-4 py-3 text-left text-slate-400 font-medium whitespace-nowrap">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800">
+                    {deliveries.map(d => (
+                      <tr key={d.id} className="hover:bg-slate-800/30 transition-colors">
+                        <td className="px-4 py-3 font-mono text-slate-400 text-xs">{d.id}</td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className="flex items-center gap-1"><MapPin className="h-3 w-3 text-slate-500" />{d.from}</span>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className="flex items-center gap-1"><MapPin className="h-3 w-3 text-orange-400" />{d.to}</span>
+                        </td>
+                        <td className="px-4 py-3 text-slate-300">{d.distance} mi</td>
+                        <td className="px-4 py-3">
+                          <Badge className="bg-slate-800 text-slate-300 border-slate-700 text-xs">
+                            {d.vehicleType?.replace("_", " ")}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-emerald-400 font-bold">${d.earnings?.toFixed(2)}</td>
+                        <td className="px-4 py-3 text-slate-400 whitespace-nowrap">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {d.scheduledAt ? new Date(d.scheduledAt).toLocaleDateString() : "—"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3"><StatusBadge status={d.status} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Drivers ── */}
+        {tab === "drivers" && (
+          <div className="space-y-4">
+            <h2 className="font-extrabold text-xl">Drivers ({drivers.length})</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {drivers.map(d => (
+                <div key={d.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-orange-500/20 border border-orange-500/30 flex items-center justify-center text-orange-400 font-bold text-sm">
+                        {d.name.split(" ").map(n => n[0]).join("")}
+                      </div>
+                      <div>
+                        <p className="font-bold text-white">{d.name}</p>
+                        <p className="text-slate-500 text-xs">{d.state} · {d.vehicleType?.replace("_", " ")}</p>
+                      </div>
+                    </div>
+                    {d.isActive
+                      ? <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">Active</Badge>
+                      : <Badge className="bg-slate-800 text-slate-400 border-slate-700 text-xs">Inactive</Badge>}
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { label: "Rating", value: d.rating?.toFixed(1) ?? "—" },
+                      { label: "Deliveries", value: d.totalDeliveries ?? 0 },
+                      { label: "Earnings", value: `$${((d.totalEarnings ?? 0) / 1000).toFixed(1)}k` },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="bg-slate-800 rounded-lg p-2 text-center">
+                        <p className="text-white font-bold text-sm">{value}</p>
+                        <p className="text-slate-500 text-xs">{label}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="text-slate-400 text-xs space-y-1">
+                    <p>{d.email}</p>
+                    <p>{d.phone}</p>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="text-slate-500 text-sm text-center py-8">Loading leads…</div>
-                ) : filteredLeads.length === 0 ? (
-                  <div className="text-slate-500 text-sm text-center py-8">
-                    {leads.length === 0 ? "No leads yet. They'll appear here once contacts submit the form." : "No results for your search."}
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Shippers ── */}
+        {tab === "shippers" && (
+          <div className="space-y-4">
+            <h2 className="font-extrabold text-xl">Shippers ({shippers.length})</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {shippers.map(s => (
+                <div key={s.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-bold text-white text-lg">{s.company ?? s.name}</p>
+                      <p className="text-slate-400 text-sm">{s.name}</p>
+                    </div>
+                    {s.isActive
+                      ? <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">Active</Badge>
+                      : <Badge className="bg-slate-800 text-slate-400 border-slate-700">Inactive</Badge>}
                   </div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="border-slate-800 hover:bg-transparent">
-                        {["Name / Business", "Contact", "Service", "Status", "Date"].map(h => (
-                          <TableHead key={h} className="text-slate-500 text-xs font-medium">{h}</TableHead>
-                        ))}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredLeads.map((lead: any, i: number) => (
-                        <TableRow key={lead.id ?? i} className="border-slate-800 hover:bg-slate-800/40">
-                          <TableCell>
-                            <p className="text-white text-sm font-medium">{lead.name}</p>
-                            <p className="text-slate-500 text-xs">{lead.business}</p>
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-0.5">
-                              <p className="text-slate-300 text-xs flex items-center gap-1"><Mail className="h-3 w-3" />{lead.email}</p>
-                              {lead.phone && <p className="text-slate-400 text-xs flex items-center gap-1"><Phone className="h-3 w-3" />{lead.phone}</p>}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-slate-400 text-xs">{lead.service || "—"}</span>
-                          </TableCell>
-                          <TableCell>
-                            <Badge className={`text-[10px] px-2 ${STATUS_BADGE[lead.status] ?? STATUS_BADGE.new}`}>
-                              {lead.status ?? "new"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-slate-500 text-xs">
-                              {lead.created_at ? new Date(lead.created_at).toLocaleDateString("en-PH") : "—"}
-                            </span>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Payments Tab */}
-          <TabsContent value="payments" className="mt-4">
-            <Card className="bg-slate-900 border-slate-800">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-white text-sm">GCash / Maya Payments</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="text-slate-500 text-sm text-center py-8">Loading payments…</div>
-                ) : payments.length === 0 ? (
-                  <div className="text-slate-500 text-sm text-center py-8">No payments yet.</div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="border-slate-800 hover:bg-transparent">
-                        {["Customer", "Plan", "Amount", "Method", "Status", "Date"].map(h => (
-                          <TableHead key={h} className="text-slate-500 text-xs font-medium">{h}</TableHead>
-                        ))}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {payments.map((p: any, i: number) => (
-                        <TableRow key={p.id ?? i} className="border-slate-800 hover:bg-slate-800/40">
-                          <TableCell>
-                            <p className="text-white text-sm">{p.customer_name || p.name || "—"}</p>
-                            <p className="text-slate-500 text-xs">{p.email}</p>
-                          </TableCell>
-                          <TableCell>
-                            <Badge className={`text-[10px] px-2 ${PLAN_BADGE[p.plan] ?? PLAN_BADGE.Starter}`}>
-                              {p.plan || "—"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-emerald-400 font-semibold text-sm">
-                              ₱{Number(p.amount || 0).toLocaleString()}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-slate-300 text-xs">{p.method || p.payment_method || "—"}</span>
-                          </TableCell>
-                          <TableCell>
-                            <Badge className={p.status === "paid" ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30 text-[10px]" : "bg-yellow-500/20 text-yellow-300 border-yellow-500/30 text-[10px]"}>
-                              {p.status || "pending"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-slate-500 text-xs">
-                              {p.created_at ? new Date(p.created_at).toLocaleDateString("en-PH") : "—"}
-                            </span>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Audits Tab */}
-          <TabsContent value="audits" className="mt-4">
-            <Card className="bg-slate-900 border-slate-800">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-white text-sm">SEO Audit Requests</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="text-slate-500 text-sm text-center py-8">Loading audits…</div>
-                ) : audits.length === 0 ? (
-                  <div className="text-slate-500 text-sm text-center py-8">No audit requests yet.</div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="border-slate-800 hover:bg-transparent">
-                        {["Business", "URL / Email", "Score", "Status", "Date"].map(h => (
-                          <TableHead key={h} className="text-slate-500 text-xs font-medium">{h}</TableHead>
-                        ))}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {audits.map((a: any, i: number) => (
-                        <TableRow key={a.id ?? i} className="border-slate-800 hover:bg-slate-800/40">
-                          <TableCell>
-                            <p className="text-white text-sm">{a.business_name || a.business || "—"}</p>
-                            <p className="text-slate-500 text-xs">{a.name}</p>
-                          </TableCell>
-                          <TableCell>
-                            <p className="text-slate-300 text-xs">{a.url || a.website || "—"}</p>
-                            <p className="text-slate-500 text-xs">{a.email}</p>
-                          </TableCell>
-                          <TableCell>
-                            {a.score != null ? (
-                              <span className={`font-bold text-sm ${a.score >= 70 ? "text-emerald-400" : a.score >= 40 ? "text-yellow-400" : "text-red-400"}`}>
-                                {a.score}/100
-                              </span>
-                            ) : <span className="text-slate-500 text-xs">Pending</span>}
-                          </TableCell>
-                          <TableCell>
-                            <Badge className={a.status === "completed" ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30 text-[10px]" : "bg-blue-500/20 text-blue-300 border-blue-500/30 text-[10px]"}>
-                              {a.status || "pending"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-slate-500 text-xs">
-                              {a.created_at ? new Date(a.created_at).toLocaleDateString("en-PH") : "—"}
-                            </span>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-slate-800 rounded-xl p-3 text-center">
+                      <p className="text-white font-bold">{s.totalPosted ?? 0}</p>
+                      <p className="text-slate-500 text-xs">Loads Posted</p>
+                    </div>
+                    <div className="bg-slate-800 rounded-xl p-3 text-center">
+                      <p className="text-emerald-400 font-bold">${(s.totalSpent ?? 0).toLocaleString()}</p>
+                      <p className="text-slate-500 text-xs">Total Spent</p>
+                    </div>
+                  </div>
+                  <div className="text-slate-400 text-xs space-y-1">
+                    <p>{s.email}</p>
+                    <p>{s.phone}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
-}
-
-// ── Root export ────────────────────────────────────────────────────────────
-export default function AdminPage() {
-  const [authed, setAuthed] = useState(false)
-
-  if (!authed) return <AdminGate onAuth={() => setAuthed(true)} />
-  return <AdminDashboard />
 }
