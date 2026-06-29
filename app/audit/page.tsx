@@ -32,7 +32,11 @@ export default function AuditPage() {
 
   const handleComplete = (
     scores: AuditScores,
-    formData: { name: string; businessName: string; answers: AuditAnswers } & Record<string, unknown>
+    formData: {
+      name: string; email: string; phone: string; businessName: string; city: string;
+      industry: string; yearsInBusiness: string; employees: string;
+      monthlyRevenue: string; biggestChallenge: string; answers: AuditAnswers;
+    }
   ) => {
     setCompleted({ scores, ...formData } as CompletedData);
     // Scroll to results
