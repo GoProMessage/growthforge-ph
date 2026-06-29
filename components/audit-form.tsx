@@ -19,10 +19,10 @@ import type { AuditAnswers, AuditScores } from "@/types";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-interface Step1 {
+export interface Step1 {
   name: string; email: string; phone: string; businessName: string; city: string;
 }
-interface Step2 {
+export interface Step2 {
   industry: string; yearsInBusiness: string; employees: string;
   monthlyRevenue: string; biggestChallenge: string;
 }

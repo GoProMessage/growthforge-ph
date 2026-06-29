@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { AuditForm } from "@/components/audit-form";
+import { AuditForm, type Step1, type Step2 } from "@/components/audit-form";
 import { AuditResults } from "@/components/audit-results";
 import { Zap, CheckCircle, ArrowLeft, Globe, Star, TrendingUp, Users, Shield } from "lucide-react";
 import type { AuditScores, AuditAnswers } from "@/types";
@@ -32,7 +32,7 @@ export default function AuditPage() {
 
   const handleComplete = (
     scores: AuditScores,
-    formData: { name: string; businessName: string; answers: AuditAnswers } & Record<string, unknown>
+    formData: Step1 & Step2 & { answers: AuditAnswers }
   ) => {
     setCompleted({ scores, ...formData } as CompletedData);
     // Scroll to results
