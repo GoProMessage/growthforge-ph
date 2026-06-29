@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
 import { CITIES, getCitiesByState } from "@/lib/cities"
 import { haversineDistance, calculateCost, formatCurrency, estimateDriveTime } from "@/lib/calculator"
+import { formatTime12h } from "@/lib/calculator"
 import { VehicleType } from "@/types"
 import {
   Truck, MapPin, Calendar, Clock, Package, DollarSign,
@@ -43,6 +44,8 @@ interface FormData {
   dimensions: string
   specialInstructions: string
   isScheduled: boolean
+  frequency: string
+  recurDays: string[]
   isUrgent: boolean
   liftGate: boolean
   loadingDock: boolean
@@ -54,7 +57,65 @@ const INITIAL: FormData = {
   pickupDate: '', pickupTime: '09:00', dropoffState: '', dropoffCity: '',
   dropoffAddress: '', dropoffZip: '', deliveryDate: '', deliveryTime: '17:00',
   description: '', weight: '', dimensions: '', specialInstructions: '',
-  isScheduled: false, isUrgent: false, liftGate: false, loadingDock: false,
+  isScheduled: false, frequency: 'weekly', recurDays: ['mon','wed','fri'], isUrgent: false, liftGate: false, loadingDock: false,
+}
+
+
+// ── 12-hour Time Picker ────────────────────────────────────────────────────
+function TimePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  // value is always "HH:MM" (24h), we display as 12h
+  const [h, m] = value.split(':').map(Number)
+  const isPM = h >= 12
+  const hour12 = h % 12 || 12
+
+  function update(newHour12: number, newMinute: number, newIsPM: boolean) {
+    let h24 = newHour12 % 12
+    if (newIsPM) h24 += 12
+    onChange(`${String(h24).padStart(2,'0')}:${String(newMinute).padStart(2,'0')}`)
+  }
+
+  return (
+    <div className="flex items-center gap-1.5">
+      {/* Hour */}
+      <select
+        value={hour12}
+        onChange={e => update(Number(e.target.value), m, isPM)}
+        className="bg-slate-800 border border-slate-700 text-white rounded-md px-2 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500"
+      >
+        {Array.from({ length: 12 }, (_, i) => i + 1).map(hr => (
+          <option key={hr} value={hr}>{hr}</option>
+        ))}
+      </select>
+      <span className="text-slate-500 font-bold">:</span>
+      {/* Minutes */}
+      <select
+        value={m}
+        onChange={e => update(hour12, Number(e.target.value), isPM)}
+        className="bg-slate-800 border border-slate-700 text-white rounded-md px-2 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-500"
+      >
+        {['00','15','30','45'].map(min => (
+          <option key={min} value={Number(min)}>{min}</option>
+        ))}
+      </select>
+      {/* AM / PM */}
+      <div className="flex rounded-md overflow-hidden border border-slate-700">
+        {(['AM','PM'] as const).map(period => (
+          <button
+            key={period}
+            type="button"
+            onClick={() => update(hour12, m, period === 'PM')}
+            className={`px-3 py-2 text-sm font-bold transition-colors ${
+              (period === 'AM' && !isPM) || (period === 'PM' && isPM)
+                ? 'bg-orange-500 text-white'
+                : 'bg-slate-800 text-slate-400 hover:text-white'
+            }`}
+          >
+            {period}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 export default function PostDeliveryPage() {
@@ -358,8 +419,7 @@ export default function PostDeliveryPage() {
                         </div>
                         <div className="space-y-1.5">
                           <Label className="text-slate-300">Pickup Time *</Label>
-                          <Input type="time" value={form.pickupTime} onChange={e => set('pickupTime', e.target.value)}
-                            className="bg-slate-800 border-slate-700 text-white" required />
+                          <TimePicker value={form.pickupTime} onChange={v => set('pickupTime', v)} />
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
@@ -371,17 +431,81 @@ export default function PostDeliveryPage() {
                         </div>
                         <div className="space-y-1.5">
                           <Label className="text-slate-300">Delivery Time *</Label>
-                          <Input type="time" value={form.deliveryTime} onChange={e => set('deliveryTime', e.target.value)}
-                            className="bg-slate-800 border-slate-700 text-white" required />
+                          <TimePicker value={form.deliveryTime} onChange={v => set('deliveryTime', v)} />
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
-                          <div>
-                            <p className="text-slate-300 text-sm font-medium">Scheduled/Recurring</p>
-                            <p className="text-slate-600 text-xs">Repeat delivery route</p>
+                        <div className="bg-slate-800/50 rounded-lg p-3">
+                          <div className="flex items-center justify-between mb-3">
+                            <div>
+                              <p className="text-slate-300 text-sm font-medium">Recurring Route</p>
+                              <p className="text-slate-600 text-xs">Repeat this delivery on a schedule</p>
+                            </div>
+                            <Switch checked={form.isScheduled} onCheckedChange={v => set('isScheduled', v)} className="data-[state=checked]:bg-orange-500" />
                           </div>
-                          <Switch checked={form.isScheduled} onCheckedChange={v => set('isScheduled', v)} className="data-[state=checked]:bg-orange-500" />
+                          {form.isScheduled && (
+                            <div className="space-y-3 pt-3 border-t border-slate-700">
+                              {/* Frequency picker */}
+                              <div>
+                                <p className="text-slate-400 text-xs mb-2 font-medium">Frequency</p>
+                                <div className="grid grid-cols-4 gap-1.5">
+                                  {[
+                                    { val: 'daily',    label: 'Daily' },
+                                    { val: 'weekly',   label: 'Weekly' },
+                                    { val: 'biweekly', label: 'Bi-Weekly' },
+                                    { val: 'monthly',  label: 'Monthly' },
+                                  ].map(({ val, label }) => (
+                                    <button
+                                      key={val}
+                                      type="button"
+                                      onClick={() => set('frequency', val)}
+                                      className={`py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                                        form.frequency === val
+                                          ? 'bg-orange-500 text-white'
+                                          : 'bg-slate-700 text-slate-400 hover:text-white'
+                                      }`}
+                                    >
+                                      {label}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                              {/* Day picker (weekly / biweekly) */}
+                              {(form.frequency === 'weekly' || form.frequency === 'biweekly') && (
+                                <div>
+                                  <p className="text-slate-400 text-xs mb-2 font-medium">Run on</p>
+                                  <div className="flex gap-1.5 flex-wrap">
+                                    {(['mon','tue','wed','thu','fri','sat','sun'] as const).map(day => {
+                                      const active = form.recurDays.includes(day)
+                                      return (
+                                        <button
+                                          key={day}
+                                          type="button"
+                                          onClick={() => {
+                                            const next = active
+                                              ? form.recurDays.filter((d: string) => d !== day)
+                                              : [...form.recurDays, day]
+                                            set('recurDays', next)
+                                          }}
+                                          className={`w-9 h-9 rounded-full text-xs font-bold uppercase transition-colors ${
+                                            active
+                                              ? 'bg-orange-500 text-white'
+                                              : 'bg-slate-700 text-slate-400 hover:text-white'
+                                          }`}
+                                        >
+                                          {day.slice(0,2)}
+                                        </button>
+                                      )
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+                              <p className="text-emerald-400 text-xs flex items-center gap-1.5">
+                                <span>✓</span>
+                                Auto-posts to Live Board 2 hrs before each pickup
+                              </p>
+                            </div>
+                          )}
                         </div>
                         <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
                           <div>

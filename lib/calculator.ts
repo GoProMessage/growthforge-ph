@@ -77,3 +77,14 @@ export function formatCurrency(amount: number): string {
 export function minutesUntilExpiry(expiresAt: Date): number {
   return Math.round((expiresAt.getTime() - Date.now()) / 60000)
 }
+
+/** "14:00" → "2:00 PM"  |  "09:30" → "9:30 AM" */
+export function formatTime12h(time: string): string {
+  const [hStr, mStr] = time.split(':')
+  const h = parseInt(hStr, 10)
+  const m = parseInt(mStr ?? '0', 10)
+  const period = h >= 12 ? 'PM' : 'AM'
+  const hour = h % 12 || 12
+  const minute = m > 0 ? `:${String(m).padStart(2, '0')}` : ''
+  return `${hour}${minute} ${period}`
+}

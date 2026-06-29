@@ -3,11 +3,11 @@
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { Delivery } from "@/types"
-import { formatCurrency, estimateDriveTime } from "@/lib/calculator"
+import { formatCurrency, estimateDriveTime, formatTime12h } from "@/lib/calculator"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { MapPin, Truck, Clock, DollarSign, Package, ArrowRight, Zap, Calendar } from "lucide-react"
+import { MapPin, RefreshCw, Truck, Clock, DollarSign, Package, ArrowRight, Zap, Calendar } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 
 const VEHICLE_BADGE: Record<string, string> = {
@@ -67,8 +67,8 @@ export function DeliveryCard({ delivery, isNew }: DeliveryCardProps) {
                   </Badge>
                 )}
                 {delivery.isScheduled && (
-                  <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-xs">
-                    <Calendar className="h-3 w-3 mr-1" />Scheduled
+                  <Badge className="bg-orange-500/15 text-orange-400 border-orange-500/25 text-xs gap-1">
+                    <RefreshCw className="h-3 w-3" />Recurring
                   </Badge>
                 )}
               </div>
@@ -126,12 +126,12 @@ export function DeliveryCard({ delivery, isNew }: DeliveryCardProps) {
           <div className="flex items-center gap-4 mb-4 text-xs text-slate-400 flex-wrap">
             <div className="flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5 text-emerald-500" />
-              <span>Pickup: <span className="text-white font-medium">{delivery.pickupDate} @ {delivery.pickupTime}</span></span>
+              <span>Pickup: <span className="text-white font-medium">{delivery.pickupDate} @ {formatTime12h(delivery.pickupTime)}</span></span>
             </div>
             <ArrowRight className="h-3 w-3 text-slate-600" />
             <div className="flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5 text-red-500" />
-              <span>Deliver: <span className="text-white font-medium">{delivery.deliveryDate} @ {delivery.deliveryTime}</span></span>
+              <span>Deliver: <span className="text-white font-medium">{delivery.deliveryDate} @ {formatTime12h(delivery.deliveryTime)}</span></span>
             </div>
           </div>
 

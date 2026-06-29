@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { MOCK_DELIVERIES, generateNewDelivery } from "@/lib/mock-data"
+import { US_STATES } from "@/lib/us-cities"
+import { getClaimedIds, onLoadClaimed } from "@/lib/claimed-store"
 import { DeliveryCard } from "@/components/delivery-card"
 import { ShareModal } from "@/components/share-modal"
 import { Badge } from "@/components/ui/badge"
@@ -39,9 +41,10 @@ function expiryLabel(d: Delivery): { text: string; urgent: boolean } {
 }
 
 export default function OpportunitiesPage() {
-  const [deliveries, setDeliveries] = useState<Delivery[]>(() =>
-    [...MOCK_DELIVERIES].filter(d => msLeft(d) > 0)
-  )
+  const [deliveries, setDeliveries] = useState<Delivery[]>(() => {
+    const claimed = getClaimedIds()
+    return [...MOCK_DELIVERIES].filter(d => msLeft(d) > 0 && !claimed.has(d.id))
+  })
   const [newDeliveryIds, setNewDeliveryIds] = useState<Set<string>>(new Set())
   const [search, setSearch] = useState('')
   const [stateFilter, setStateFilter] = useState<string>('all')
@@ -58,6 +61,15 @@ export default function OpportunitiesPage() {
   useEffect(() => {
     const iv = setInterval(() => setScanPulse(p => !p), 1500)
     return () => clearInterval(iv)
+  }, [])
+
+  // ── Remove load from board the instant it is claimed (any tab) ────────────
+  useEffect(() => {
+    return onLoadClaimed((id) => {
+      setDeliveries(prev => prev.filter(d => d.id !== id))
+      setNotification({ text: '✅ Load claimed — removed from board', type: 'expire' })
+      setTimeout(() => setNotification(null), 4000)
+    })
   }, [])
 
   // ── Expiry: purge expired loads every 30 seconds + update countdowns ──
@@ -192,11 +204,11 @@ export default function OpportunitiesPage() {
               <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
                 <SelectValue placeholder="All States" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700">
+              <SelectContent className="bg-slate-800 border-slate-700 max-h-64 overflow-y-auto">
                 <SelectItem value="all">All States</SelectItem>
-                <SelectItem value="SC">South Carolina</SelectItem>
-                <SelectItem value="NC">North Carolina</SelectItem>
-                <SelectItem value="GA">Georgia</SelectItem>
+                {US_STATES.map(s => (
+                  <SelectItem key={s.code} value={s.code}>{s.name}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Select value={vehicleFilter} onValueChange={v => setVehicleFilter(v as VehicleFilter)}>

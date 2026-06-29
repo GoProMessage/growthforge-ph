@@ -1,7 +1,7 @@
 // ── VanRoute Pro types ────────────────────────────────────────────────────────
 export type VehicleType = 'cargo-van' | 'sprinter-van' | 'box-truck'
 export type DeliveryStatus = 'available' | 'assigned' | 'in-transit' | 'completed' | 'cancelled'
-export type State = 'SC' | 'NC' | 'GA'
+export type State = string   // now supports all 50 US states
 
 export interface CityData {
   name: string
@@ -170,4 +170,36 @@ export interface AuditScores {
   reputation: number
   advertising: number
   overall: number
+}
+
+// ── Recurring Routes ──────────────────────────────────────────────────────────
+export type RecurringFrequency = 'daily' | 'weekly' | 'biweekly' | 'monthly'
+export type WeekDay = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun'
+
+export interface RecurringRoute {
+  id: string
+  name: string
+  shipperId: string
+  shipperName: string
+  vehicleType: VehicleType
+  pickup: DeliveryLocation
+  dropoff: DeliveryLocation
+  pickupTime: string
+  deliveryTime: string
+  frequency: RecurringFrequency
+  daysOfWeek?: WeekDay[]
+  isActive: boolean
+  startDate: string
+  endDate?: string
+  nextRunDate: string
+  lastRunDate?: string
+  lastRunStatus?: 'completed' | 'missed' | 'pending'
+  totalRuns: number
+  distance: number
+  description: string
+  totalCost: number
+  driverPayout: number
+  liftGate?: boolean
+  loadingDock?: boolean
+  createdAt: Date
 }

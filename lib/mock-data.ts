@@ -1,5 +1,6 @@
 import { Delivery, Driver, Shipper, AdminStats, VehicleType, State, DeliveryLocation } from '@/types'
 import { CITIES } from './cities'
+import { randomCityPair, US_CITIES } from './us-cities'
 import { haversineDistance, calculateCost } from './calculator'
 
 function makeLocation(city: string, state: State, street: string, zip: string): DeliveryLocation {
@@ -356,12 +357,10 @@ const LIVE_DESCRIPTIONS = [
 let liveIdCounter = 1000
 
 export function generateNewDelivery(): Delivery {
-  const allCities = CITIES
-  const pickupCity = allCities[Math.floor(Math.random() * allCities.length)]
-  let dropoffCity = allCities[Math.floor(Math.random() * allCities.length)]
-  while (dropoffCity.name === pickupCity.name) {
-    dropoffCity = allCities[Math.floor(Math.random() * allCities.length)]
-  }
+  // Use full US city database for nationwide loads
+  const { pickup: pCity, dropoff: dCity } = randomCityPair()
+  const pickupCity  = { name: pCity.name,  state: pCity.state,  lat: pCity.lat,  lng: pCity.lng  }
+  const dropoffCity = { name: dCity.name,  state: dCity.state,  lat: dCity.lat,  lng: dCity.lng  }
 
   const vehicles: VehicleType[] = ['cargo-van', 'sprinter-van', 'box-truck']
   const weights: Record<VehicleType, string[]> = {
@@ -379,7 +378,7 @@ export function generateNewDelivery(): Delivery {
     address: `${100 + Math.floor(Math.random() * 900)} Main St`,
     city: pickupCity.name,
     state: pickupCity.state,
-    zip: `${29000 + Math.floor(Math.random() * 3000)}`,
+    zip: pCity.zip ?? '00000',
     lat: pickupCity.lat,
     lng: pickupCity.lng,
   }
@@ -387,7 +386,7 @@ export function generateNewDelivery(): Delivery {
     address: `${100 + Math.floor(Math.random() * 900)} Commerce Blvd`,
     city: dropoffCity.name,
     state: dropoffCity.state,
-    zip: `${29000 + Math.floor(Math.random() * 3000)}`,
+    zip: dCity.zip ?? '00000',
     lat: dropoffCity.lat,
     lng: dropoffCity.lng,
   }

@@ -9,13 +9,14 @@ import { Badge } from "@/components/ui/badge"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import {
   Truck, Menu, Home, Search, User, Settings,
-  MapPin, Package, DollarSign, Share, BarChart3, Bell
+  MapPin, Package, DollarSign, Share, BarChart3, Bell, RefreshCw
 } from "lucide-react"
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/opportunities", label: "Live Board", icon: Search, live: true },
   { href: "/post-delivery", label: "Post Delivery", icon: Package },
+  { href: "/recurring-routes", label: "Recurring", icon: RefreshCw },
   { href: "/driver", label: "Driver Portal", icon: Truck },
   { href: "/shipper", label: "Shipper Portal", icon: User },
   { href: "/admin", label: "Admin", icon: BarChart3 },

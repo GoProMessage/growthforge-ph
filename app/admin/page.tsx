@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Truck, Package, Users, DollarSign, RefreshCw, Lock, BarChart3, MapPin, Calendar } from "lucide-react"
+import { Truck, Package, Users, DollarSign, RefreshCw, Lock, BarChart3, MapPin, Calendar, CreditCard, Building, CheckCircle, AlertCircle, Zap, Shield } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
@@ -165,7 +165,10 @@ const WEEKLY_CHART = [
 // ── Main dashboard ─────────────────────────────────────────────────────────
 export default function AdminPage() {
   const [authed, setAuthed] = useState(false)
-  const [tab, setTab] = useState<"overview" | "deliveries" | "drivers" | "shippers">("overview")
+  const [tab, setTab] = useState<"overview" | "deliveries" | "drivers" | "shippers" | "payouts">("overview")
+  const [payoutMethod, setPayoutMethod] = useState<"debit" | "bank">("debit")
+  const [payoutConnected, setPayoutConnected] = useState(false)
+  const [payoutForm, setPayoutForm] = useState({ cardNumber: "", expiry: "", cvv: "", name: "", routing: "", account: "" })
   const [spinning, setSpinning] = useState(false)
 
   const deliveries = placeholderDeliveries()
@@ -173,6 +176,7 @@ export default function AdminPage() {
   const shippers = placeholderShippers()
 
   const totalRevenue = deliveries.filter(d => d.status === "completed").reduce((s, d) => s + d.driverPayout, 0)
+  const platformTotal = deliveries.filter(d => d.status === "completed").reduce((s, d) => s + (d.platformFee ?? d.totalCost * 0.05), 0)
   const activeLoads = deliveries.filter(d => d.status === "in-transit" || d.status === "available").length
   const activeDrivers = drivers.filter(d => d.isAvailable).length
 
@@ -207,7 +211,7 @@ export default function AdminPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Tabs */}
         <div className="flex gap-1 bg-slate-900 border border-slate-800 rounded-xl p-1 w-fit overflow-x-auto">
-          {(["overview", "deliveries", "drivers", "shippers"] as const).map(t => (
+          {(["overview", "deliveries", "drivers", "shippers", "payouts"] as const).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -395,6 +399,116 @@ export default function AdminPage() {
             </div>
           </div>
         )}
+
+        {tab === "payouts" && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {[
+                { label: "Total Platform Earnings", value: `$${platformTotal.toFixed(2)}`, sub: "5% of all completed loads", color: "text-orange-400", icon: DollarSign },
+                { label: "Pending Payout", value: `$${(platformTotal * 0.4).toFixed(2)}`, sub: "Available to withdraw", color: "text-emerald-400", icon: Zap },
+                { label: "Paid Out", value: `$${(platformTotal * 0.6).toFixed(2)}`, sub: "Transferred to account", color: "text-blue-400", icon: CheckCircle },
+              ].map(({ label, value, sub, color, icon: Icon }) => (
+                <div key={label} className="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center gap-4">
+                  <div className="bg-slate-800 rounded-xl p-3"><Icon className={`h-5 w-5 ${color}`} /></div>
+                  <div>
+                    <p className={`text-2xl font-extrabold ${color}`}>{value}</p>
+                    <p className="text-white text-sm font-semibold">{label}</p>
+                    <p className="text-slate-500 text-xs">{sub}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h3 className="text-white font-extrabold text-lg">Platform Payout Method</h3>
+                  <p className="text-slate-500 text-sm">Where VanRoute Pro sends your 5% platform fee earnings</p>
+                </div>
+                {payoutConnected && (
+                  <span className="flex items-center gap-1.5 text-emerald-400 text-sm font-semibold bg-emerald-500/10 border border-emerald-500/25 px-3 py-1.5 rounded-full">
+                    <CheckCircle className="h-3.5 w-3.5" />Connected
+                  </span>
+                )}
+              </div>
+              {payoutConnected ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4 bg-slate-800/60 border border-slate-700 rounded-xl p-4">
+                    {payoutMethod === "debit" ? (
+                      <><div className="bg-orange-500/20 rounded-xl p-3"><CreditCard className="h-5 w-5 text-orange-400" /></div>
+                      <div><p className="text-white font-semibold">Debit Card connected</p><p className="text-slate-500 text-sm">Instant payouts · Transfers within 30 min</p></div></>
+                    ) : (
+                      <><div className="bg-blue-500/20 rounded-xl p-3"><Building className="h-5 w-5 text-blue-400" /></div>
+                      <div><p className="text-white font-semibold">Bank Account connected</p><p className="text-slate-500 text-sm">Standard ACH · 1–2 business days</p></div></>
+                    )}
+                  </div>
+                  <div className="flex gap-3">
+                    <button onClick={() => setPayoutConnected(false)} className="flex-1 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 rounded-xl py-2.5 text-sm font-semibold transition-colors">Change Method</button>
+                    <button className="flex-1 bg-orange-500 hover:bg-orange-400 text-white rounded-xl py-2.5 text-sm font-bold transition-colors">Withdraw ${(platformTotal * 0.4).toFixed(2)}</button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-5">
+                  <div className="flex gap-2">
+                    {([{ val: "debit", label: "⚡ Instant (Debit Card)", sub: "~30 min" }, { val: "bank", label: "🏦 Standard (Bank ACH)", sub: "1–2 days" }] as const).map(({ val, label, sub }) => (
+                      <button key={val} onClick={() => setPayoutMethod(val)} className={`flex-1 rounded-xl border p-3 text-left transition-all ${payoutMethod === val ? "border-orange-500/60 bg-orange-500/10" : "border-slate-700 bg-slate-800/40 hover:border-slate-600"}`}>
+                        <p className={`text-sm font-semibold ${payoutMethod === val ? "text-orange-400" : "text-slate-300"}`}>{label}</p>
+                        <p className="text-slate-500 text-xs">{sub}</p>
+                      </button>
+                    ))}
+                  </div>
+                  {payoutMethod === "debit" ? (
+                    <div className="space-y-3">
+                      <div className="space-y-1.5"><label className="text-slate-400 text-xs font-medium">Cardholder Name</label>
+                        <input value={payoutForm.name} onChange={e => setPayoutForm(p => ({ ...p, name: e.target.value }))} placeholder="Full name on card" className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-4 py-2.5 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-orange-500" /></div>
+                      <div className="space-y-1.5"><label className="text-slate-400 text-xs font-medium">Card Number</label>
+                        <input value={payoutForm.cardNumber} onChange={e => setPayoutForm(p => ({ ...p, cardNumber: e.target.value.replace(/[^0-9]/g, '').slice(0,16) }))} placeholder="•••• •••• •••• ••••" maxLength={16} className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-4 py-2.5 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-orange-500 font-mono" /></div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5"><label className="text-slate-400 text-xs font-medium">Expiry</label>
+                          <input value={payoutForm.expiry} onChange={e => setPayoutForm(p => ({ ...p, expiry: e.target.value }))} placeholder="MM/YY" maxLength={5} className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-4 py-2.5 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-orange-500" /></div>
+                        <div className="space-y-1.5"><label className="text-slate-400 text-xs font-medium">CVV</label>
+                          <input value={payoutForm.cvv} onChange={e => setPayoutForm(p => ({ ...p, cvv: e.target.value.replace(/[^0-9]/g, '').slice(0,4) }))} placeholder="•••" maxLength={4} className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-4 py-2.5 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-orange-500" /></div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="space-y-1.5"><label className="text-slate-400 text-xs font-medium">Routing Number</label>
+                        <input value={payoutForm.routing} onChange={e => setPayoutForm(p => ({ ...p, routing: e.target.value.replace(/[^0-9]/g,'').slice(0,9) }))} placeholder="9-digit routing number" maxLength={9} className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-4 py-2.5 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-orange-500 font-mono" /></div>
+                      <div className="space-y-1.5"><label className="text-slate-400 text-xs font-medium">Account Number</label>
+                        <input value={payoutForm.account} onChange={e => setPayoutForm(p => ({ ...p, account: e.target.value.replace(/[^0-9]/g,'').slice(0,17) }))} placeholder="Account number" className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-4 py-2.5 text-sm placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-orange-500 font-mono" /></div>
+                    </div>
+                  )}
+                  <div className="flex items-start gap-2 text-xs text-slate-500 bg-slate-800/40 rounded-xl p-3">
+                    <Shield className="h-3.5 w-3.5 text-slate-400 shrink-0 mt-0.5" />
+                    <span>Your payout details are encrypted and stored securely. Platform fees are automatically swept to your connected account after each completed delivery.</span>
+                  </div>
+                  <button onClick={() => { if ((payoutMethod === "debit" && payoutForm.cardNumber.length >= 4 && payoutForm.name) || (payoutMethod === "bank" && payoutForm.routing.length >= 9 && payoutForm.account.length >= 4)) setPayoutConnected(true) }} className="w-full bg-orange-500 hover:bg-orange-400 text-white font-bold rounded-xl py-3 text-sm transition-colors">Connect {payoutMethod === "debit" ? "Debit Card" : "Bank Account"} →</button>
+                </div>
+              )}
+            </div>
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-800"><h3 className="text-white font-bold">Recent Platform Fee History</h3></div>
+              <table className="w-full text-sm">
+                <thead><tr className="border-b border-slate-800">
+                  <th className="px-5 py-3 text-left text-slate-500 font-medium">Route</th>
+                  <th className="px-4 py-3 text-left text-slate-500 font-medium">Shipper Total</th>
+                  <th className="px-4 py-3 text-left text-slate-500 font-medium">5% Platform Fee</th>
+                  <th className="px-4 py-3 text-left text-slate-500 font-medium">Status</th>
+                </tr></thead>
+                <tbody>
+                  {deliveries.filter(d => d.status === "completed").map(d => (
+                    <tr key={d.id} className="border-b border-slate-800/50 hover:bg-slate-800/20">
+                      <td className="px-5 py-3"><p className="text-white font-medium text-xs">{d.pickup?.city} → {d.dropoff?.city}</p><p className="text-slate-500 text-xs">{d.pickupDate}</p></td>
+                      <td className="px-4 py-3 text-slate-300">${d.totalCost?.toFixed(2)}</td>
+                      <td className="px-4 py-3 text-orange-400 font-bold">${(d.platformFee ?? d.totalCost * 0.05).toFixed(2)}</td>
+                      <td className="px-4 py-3"><span className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 text-xs px-2 py-0.5 rounded-full">Paid</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   )
