@@ -78,7 +78,7 @@ export function minutesUntilExpiry(expiresAt: Date): number {
   return Math.round((expiresAt.getTime() - Date.now()) / 60000)
 }
 
-/** "14:00" → "2:00 PM"  |  "09:30" → "9:30 AM" */
+/** Format a 24h "HH:MM" string as 12h AM/PM (e.g. "14:00" → "2 PM") */
 export function formatTime12h(time: string): string {
   const [hStr, mStr] = time.split(':')
   const h = parseInt(hStr, 10)

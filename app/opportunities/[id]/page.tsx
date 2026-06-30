@@ -1,23 +1,21 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import dynamic from "next/dynamic"
 import { MOCK_DELIVERIES, MOCK_DRIVERS } from "@/lib/mock-data"
-import { formatCurrency, estimateDriveTime, VEHICLE_LABELS, formatTime12h } from "@/lib/calculator"
+import { formatCurrency, estimateDriveTime, VEHICLE_LABELS } from "@/lib/calculator"
 import { DriverProfileCard, DriverProfileData } from "@/components/driver-profile-card"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import {
   Truck, MapPin, Clock, DollarSign, Package, Phone, Calendar,
   ArrowLeft, ArrowRight, Zap, CheckCircle, Shield, User,
-  Navigation, AlertCircle, Star, Percent, Mail,
+  Navigation, AlertCircle, Star, CreditCard, Percent,
 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
-import { claimLoad, isLoadClaimed } from "@/lib/claimed-store"
 import Link from "next/link"
 
 const MapDirections = dynamic(
@@ -67,15 +65,6 @@ export default function DeliveryDetailPage() {
 
   const delivery = MOCK_DELIVERIES.find(d => d.id === id) || MOCK_DELIVERIES[0]
   const [claimed, setClaimed] = useState(false)
-  const [alreadyClaimed, setAlreadyClaimed] = useState(false)
-  const [contactOpen, setContactOpen] = useState(false)
-
-  // Check on mount whether another driver already claimed this load
-  useEffect(() => {
-    if (delivery && isLoadClaimed(delivery.id)) {
-      setAlreadyClaimed(true)
-    }
-  }, [delivery?.id])
 
   if (!delivery) {
     return (
@@ -191,7 +180,7 @@ export default function DeliveryDetailPage() {
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <Clock className="h-4 w-4 text-emerald-500" />
-                      <span className="text-slate-300 font-semibold">{formatTime12h(delivery.pickupTime)}</span>
+                      <span className="text-slate-300 font-semibold">{delivery.pickupTime}</span>
                     </div>
                     {delivery.loadingDock && <Badge className="bg-slate-800 text-slate-400 border-slate-700 text-xs">Loading Dock Available</Badge>}
                     {delivery.liftGate && <Badge className="bg-slate-800 text-slate-400 border-slate-700 text-xs">Lift Gate Required</Badge>}
@@ -216,7 +205,7 @@ export default function DeliveryDetailPage() {
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <Clock className="h-4 w-4 text-red-500" />
-                      <span className="text-slate-300 font-semibold">{formatTime12h(delivery.deliveryTime)}</span>
+                      <span className="text-slate-300 font-semibold">{delivery.deliveryTime}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -280,7 +269,7 @@ export default function DeliveryDetailPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-white text-lg flex items-center gap-2">
                   <DollarSign className="h-5 w-5 text-orange-500" />
-                  Your Payout Breakdown
+                  Pay Breakdown
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-0 space-y-3">
@@ -308,7 +297,7 @@ export default function DeliveryDetailPage() {
                   <span className="text-orange-400 font-extrabold text-2xl">{formatCurrency(delivery.driverPayout)}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs text-slate-500">
-                  <span className="flex items-center gap-1"><Zap className="h-3 w-3 text-orange-400" />Instant pay available</span>
+                  <span className="flex items-center gap-1"><CreditCard className="h-3 w-3" />Instant pay available</span>
                   <span>~30 min after drop-off</span>
                 </div>
                 <div className="grid grid-cols-2 gap-3 pt-1">
@@ -361,100 +350,35 @@ export default function DeliveryDetailPage() {
               </CardContent>
             </Card>
 
-            {/* Already claimed banner */}
-            {alreadyClaimed && (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-red-300 font-bold text-sm">Load Already Claimed</p>
-                  <p className="text-slate-400 text-xs mt-0.5">This delivery was picked up by another driver. Head back to the Live Board for available loads.</p>
-                  <Link href="/opportunities" className="inline-block mt-2">
-                    <Button size="sm" className="bg-orange-500 hover:bg-orange-400 text-white font-semibold gap-1.5 h-8 text-xs">
-                      <ArrowLeft className="h-3.5 w-3.5" />Back to Live Board
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            )}
-
             {/* CTA Buttons */}
             <div className="space-y-3">
               {!claimed ? (
-                <Button
-                  onClick={() => { claimLoad(delivery.id); setClaimed(true) }}
-                  disabled={alreadyClaimed}
-                  className="w-full bg-orange-500 hover:bg-orange-400 text-white font-bold h-12 text-base gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                  <CheckCircle className="h-5 w-5" />
-                  Claim This Load — Free
-                </Button>
+                <>
+                  <Button onClick={() => setClaimed(true)}
+                    className="w-full bg-orange-500 hover:bg-orange-400 text-white font-bold h-12 text-base gap-2">
+                    <CheckCircle className="h-5 w-5" />
+                    Claim This Load
+                  </Button>
+                  <Link href={`/payment/${delivery.id}`}>
+                    <Button variant="outline" className="w-full border-orange-500/40 text-orange-400 hover:bg-orange-500/10 h-11 gap-2 font-semibold">
+                      <CreditCard className="h-4 w-4" />
+                      Pay & Reserve Now
+                    </Button>
+                  </Link>
+                </>
               ) : (
-                <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-5 text-center space-y-3">
-                  <CheckCircle className="h-10 w-10 text-emerald-400 mx-auto" />
-                  <p className="text-emerald-300 font-bold text-lg">Load Claimed!</p>
-                  <p className="text-slate-400 text-sm">Your driver profile has been sent to the shipper. Head to the pickup location at the scheduled time — your payout of <span className="text-orange-400 font-bold">{formatCurrency(delivery.driverPayout)}</span> is released after drop-off confirmation.</p>
+                <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 text-center space-y-2">
+                  <CheckCircle className="h-8 w-8 text-emerald-400 mx-auto" />
+                  <p className="text-emerald-300 font-bold">Load Claimed!</p>
+                  <p className="text-slate-400 text-xs">Driver profile shown to shipper. Payout sent after drop-off confirmation.</p>
                 </div>
               )}
               <Button variant="outline"
                 className="w-full border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 h-11 gap-2"
-                onClick={() => setContactOpen(true)}>
+                onClick={() => delivery.contactPhone && window.open(`tel:${delivery.contactPhone}`)}>
                 <Phone className="h-4 w-4" />
                 Contact Shipper
               </Button>
-
-              {/* Contact Shipper Modal */}
-              <Dialog open={contactOpen} onOpenChange={setContactOpen}>
-                <DialogContent className="bg-slate-900 border-slate-800 max-w-sm">
-                  <DialogHeader>
-                    <DialogTitle className="text-white flex items-center gap-2">
-                      <div className="bg-orange-500/20 p-2 rounded-lg">
-                        <Phone className="h-4 w-4 text-orange-400" />
-                      </div>
-                      Contact Shipper
-                    </DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 pt-1">
-                    {/* Shipper info */}
-                    <div className="bg-slate-800/60 rounded-xl p-4 space-y-1">
-                      <p className="text-white font-bold text-base">{delivery.shipperName}</p>
-                      {delivery.shipperCompany && (
-                        <p className="text-slate-400 text-sm">{delivery.shipperCompany}</p>
-                      )}
-                    </div>
-                    {/* Phone */}
-                    {delivery.contactPhone && (
-                      <a href={`tel:${delivery.contactPhone}`}
-                        className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/25 rounded-xl px-4 py-3 group hover:bg-emerald-500/20 transition-colors">
-                        <div className="flex items-center gap-3">
-                          <div className="bg-emerald-500/20 p-2 rounded-lg">
-                            <Phone className="h-4 w-4 text-emerald-400" />
-                          </div>
-                          <div>
-                            <p className="text-slate-400 text-xs">Phone (tap to call)</p>
-                            <p className="text-white font-semibold">{delivery.contactPhone}</p>
-                          </div>
-                        </div>
-                        <CheckCircle className="h-4 w-4 text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </a>
-                    )}
-                    {/* SMS */}
-                    {delivery.contactPhone && (
-                      <a href={`sms:${delivery.contactPhone}`}
-                        className="flex items-center gap-3 bg-blue-500/10 border border-blue-500/25 rounded-xl px-4 py-3 hover:bg-blue-500/20 transition-colors">
-                        <div className="bg-blue-500/20 p-2 rounded-lg">
-                          <Mail className="h-4 w-4 text-blue-400" />
-                        </div>
-                        <div>
-                          <p className="text-slate-400 text-xs">Text Message</p>
-                          <p className="text-white font-semibold">{delivery.contactPhone}</p>
-                        </div>
-                      </a>
-                    )}
-                    <p className="text-slate-500 text-xs text-center">
-                      Available Mon–Fri 7 AM – 6 PM local time · Load #{delivery.id}
-                    </p>
-                  </div>
-                </DialogContent>
-              </Dialog>
               <a href={`https://www.google.com/maps/dir/?api=1&origin=${delivery.pickup.lat},${delivery.pickup.lng}&destination=${delivery.dropoff.lat},${delivery.dropoff.lng}&travelmode=driving`}
                 target="_blank" rel="noopener noreferrer">
                 <Button variant="outline" className="w-full border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 h-11 gap-2">

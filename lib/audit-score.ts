@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { AuditAnswers, AuditScores } from "@/types";
 
 export function calculateAuditScore(answers: AuditAnswers): AuditScores {

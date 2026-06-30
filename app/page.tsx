@@ -79,6 +79,7 @@ export default function HomePage() {
 
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden">
+        {/* Background glow */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-20 left-1/4 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl" />
           <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-blue-500/8 rounded-full blur-3xl" />
@@ -91,6 +92,7 @@ export default function HomePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
           >
+            {/* Live badge */}
             <div className="flex items-center justify-center gap-2">
               <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 gap-2 px-4 py-1.5 text-sm">
                 <span className={`w-2 h-2 rounded-full bg-emerald-500 ${pulse ? "animate-pulse" : ""}`} />
@@ -130,6 +132,7 @@ export default function HomePage() {
               </Link>
             </div>
 
+            {/* Trust row */}
             <div className="flex flex-wrap items-center justify-center gap-6 pt-6 text-slate-500 text-sm">
               {["No subscription fees", "Secure online payments", "Real-time GPS routing", "SC · NC · GA coverage"].map(t => (
                 <span key={t} className="flex items-center gap-1.5">
@@ -181,7 +184,7 @@ export default function HomePage() {
               viewport={{ once: true }}
               transition={{ delay: i * 0.08 }}
             >
-              <div className="inline-flex p-3 rounded-xl bg-slate-800 mb-4">
+              <div className={`inline-flex p-3 rounded-xl bg-slate-800 mb-4`}>
                 <Icon className={`h-6 w-6 ${color}`} />
               </div>
               <h3 className="font-bold text-lg mb-2">{title}</h3>
@@ -201,13 +204,19 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {[
               {
-                type: "Cargo Van", icon: "🚐", base: 35, rate: 1.25,
+                type: "Cargo Van",
+                icon: "🚐",
+                base: 35,
+                rate: 1.25,
                 color: "border-orange-500/40 bg-orange-500/5",
                 badge: "bg-orange-500/20 text-orange-400 border-orange-500/30",
                 perks: ["Local & regional routes", "Up to 2,500 lbs capacity", "Easy urban navigation", "Lower fuel cost"],
               },
               {
-                type: "Sprinter Van", icon: "🚌", base: 55, rate: 1.75,
+                type: "Sprinter Van",
+                icon: "🚌",
+                base: 55,
+                rate: 1.75,
                 color: "border-blue-500/40 bg-blue-500/5",
                 badge: "bg-blue-500/20 text-blue-400 border-blue-500/30",
                 perks: ["Long-haul interstate loads", "Up to 4,500 lbs capacity", "Higher payout per mile", "Recurring freight routes"],
@@ -241,12 +250,51 @@ export default function HomePage() {
                 </ul>
                 <Link href="/opportunities">
                   <Button className="w-full bg-slate-700 hover:bg-slate-600 text-white gap-2">
-                    View {type} Loads <ArrowRight className="h-4 w-4" />
+                    View {type} Loads
+                    <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ── City Grid ─────────────────────────────────────────────────────── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        <div className="text-center mb-14">
+          <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 mb-4">Coverage Area</Badge>
+          <h2 className="text-3xl sm:text-4xl font-extrabold">Active Markets</h2>
+          <p className="text-slate-400 mt-3">Loads available across 30 cities in three states</p>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          {FEATURED_CITIES.map((city) => {
+            const loads = Math.floor(Math.random() * 12) + 2
+            const stateColors: Record<string, string> = {
+              SC: "text-orange-400 bg-orange-500/10 border-orange-500/20",
+              NC: "text-blue-400 bg-blue-500/10 border-blue-500/20",
+              GA: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+            }
+            return (
+              <Link key={city.name} href="/opportunities">
+                <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 hover:border-slate-700 hover:bg-slate-800/60 transition-all group cursor-pointer">
+                  <div className={`inline-flex px-2 py-0.5 rounded text-xs font-semibold border mb-2 ${stateColors[city.state]}`}>
+                    {city.state}
+                  </div>
+                  <p className="font-semibold text-white text-sm group-hover:text-orange-400 transition-colors">{city.name}</p>
+                  <p className="text-slate-500 text-xs mt-1">{loads} loads</p>
+                </div>
+              </Link>
+            )
+          })}
+        </div>
+        <div className="text-center mt-8">
+          <Link href="/opportunities">
+            <Button variant="outline" className="border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 gap-2">
+              View All 30 Cities
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
         </div>
       </section>
 
@@ -315,4 +363,3 @@ export default function HomePage() {
     </div>
   )
 }
-// build: 2026-06-30

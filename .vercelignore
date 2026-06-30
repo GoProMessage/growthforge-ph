@@ -1,0 +1,10 @@
+.next
+node_modules
+*.sock
+*.socket
+.devcontainer
+*.log
+.env.local
+.env*.local
+growthforge-ph/
+magica/

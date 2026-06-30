@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   Truck, DollarSign, Star, Package, MapPin, TrendingUp,
-  CheckCircle, Clock, ArrowRight, Search, Activity, Calendar, CreditCard, Zap, UserCheck
+  CheckCircle, Clock, ArrowRight, Search, Activity, Calendar
 } from "lucide-react"
 import { ShareModal } from "@/components/share-modal"
 
@@ -40,7 +40,6 @@ const weeklyEarnings = [
 
 export default function DriverPage() {
   const [isAvailable, setIsAvailable] = useState(true)
-  const [payoutConnected, setPayoutConnected] = useState(false)
   const thisWeek = weeklyEarnings.reduce((s, d) => s + d.earnings, 0)
   const maxEarning = Math.max(...weeklyEarnings.map(d => d.earnings))
 
@@ -87,32 +86,6 @@ export default function DriverPage() {
         </Card>
 
         {/* Stats */}
-
-        {/* Payout setup banner */}
-        {!payoutConnected && (
-          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 mb-6 flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="flex items-center gap-3 flex-1">
-              <CreditCard className="h-6 w-6 text-yellow-400 shrink-0" />
-              <div>
-                <p className="text-yellow-300 font-bold text-sm">Connect your payout — get paid after every delivery</p>
-                <p className="text-slate-400 text-xs mt-0.5">Instant pay to debit card (30 min) or standard ACH (1–2 days). Takes 2 minutes.</p>
-              </div>
-            </div>
-            <div className="flex gap-2 shrink-0">
-              <Link href="/driver/setup">
-                <Button size="sm" className="bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-bold gap-2">
-                  <Zap className="h-4 w-4" />
-                  Setup Payout
-                </Button>
-              </Link>
-              <Button size="sm" variant="ghost" onClick={() => setPayoutConnected(true)}
-                className="text-slate-500 hover:text-slate-300 text-xs">
-                Dismiss
-              </Button>
-            </div>
-          </div>
-        )}
-
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
             { label: 'This Week', value: formatCurrency(thisWeek), icon: DollarSign, color: 'text-orange-400', sub: '5 deliveries' },

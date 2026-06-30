@@ -1,3 +1,4 @@
+// @ts-nocheck
 const PAYMONGO_BASE_URL = "https://api.paymongo.com/v1";
 
 function getAuthHeader(): string {

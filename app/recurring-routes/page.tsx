@@ -204,11 +204,11 @@ function RouteCard({ route, onToggle, onDelete }: {
           <p className="text-slate-600 text-xs">Per Run</p>
         </div>
         <div className="text-center">
-          <p className="text-white font-bold text-base">{route.totalRuns}</p>
+          <p className="text-white font-bold text-base">{route.totalRuns ?? 0}</p>
           <p className="text-slate-600 text-xs">Total Runs</p>
         </div>
         <div className="text-center">
-          <p className="text-emerald-400 font-bold text-base truncate">{route.nextRunDate.slice(5)}</p>
+          <p className="text-emerald-400 font-bold text-base truncate">{route.nextRunDate?.slice(5) ?? "-"}</p>
           <p className="text-slate-600 text-xs">Next Run</p>
         </div>
         <div className="text-center">
@@ -257,10 +257,10 @@ export default function RecurringRoutesPage() {
   const [routes, setRoutes] = useState<RecurringRoute[]>(MOCK_ROUTES)
   const [filter, setFilter] = useState<'all' | 'active' | 'paused'>('all')
 
-  const activeCount   = routes.filter(r => r.isActive).length
-  const pausedCount   = routes.filter(r => !r.isActive).length
-  const totalRuns     = routes.reduce((s, r) => s + r.totalRuns, 0)
-  const totalEarnings = routes.reduce((s, r) => s + r.driverPayout * r.totalRuns, 0)
+  const activeCount   = routes.filter(r => r.isActive === true).length
+  const pausedCount   = routes.filter(r => !r.isActive === true).length
+  const totalRuns     = routes.reduce((s, r) => s + (r.totalRuns ?? 0), 0)
+  const totalEarnings = routes.reduce((s, r) => s + r.driverPayout * (r.totalRuns ?? 0), 0)
 
   const filtered = routes.filter(r => {
     if (filter === 'active') return r.isActive
@@ -406,7 +406,7 @@ export default function RecurringRoutesPage() {
               <CardContent className="p-0">
                 {routes
                   .filter(r => r.isActive)
-                  .sort((a, b) => a.nextRunDate.localeCompare(b.nextRunDate))
+                  .sort((a, b) => (a.nextRunDate ?? "").localeCompare(b.nextRunDate ?? ""))
                   .map((route, i, arr) => (
                     <div key={route.id} className={`flex items-center gap-4 px-5 py-4 ${i < arr.length - 1 ? 'border-b border-slate-800' : ''}`}>
                       <div className="bg-orange-500/15 rounded-xl p-2.5 shrink-0">

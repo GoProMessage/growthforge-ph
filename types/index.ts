@@ -1,7 +1,6 @@
-// ── VanRoute Pro types ────────────────────────────────────────────────────────
 export type VehicleType = 'cargo-van' | 'sprinter-van' | 'box-truck'
 export type DeliveryStatus = 'available' | 'assigned' | 'in-transit' | 'completed' | 'cancelled'
-export type State = string   // now supports all 50 US states
+export type State = 'SC' | 'NC' | 'GA'
 
 export interface CityData {
   name: string
@@ -36,8 +35,8 @@ export interface Delivery {
   mileageRate: number
   mileageCost: number
   totalCost: number
-  platformFee: number
-  driverPayout: number
+  platformFee: number          // platform's 5% cut
+  driverPayout: number         // what driver earns
   description: string
   weight?: string
   dimensions?: string
@@ -46,12 +45,12 @@ export interface Delivery {
   isScheduled: boolean
   isUrgent: boolean
   postedAt: Date
-  expiresAt: Date
+  expiresAt: Date              // load disappears after this
   assignedDriverId?: string
   contactPhone?: string
   loadingDock?: boolean
   liftGate?: boolean
-  source?: string
+  source?: string              // 'OneRail' | 'direct' | 'posted'
 }
 
 export interface Driver {
@@ -89,7 +88,7 @@ export interface AdminStats {
   activeDeliveries: number
   completedDeliveries: number
   totalRevenue: number
-  platformRevenue: number
+  platformRevenue: number      // 5% collected
   activeDrivers: number
   totalDrivers: number
   activeShippers: number
@@ -99,107 +98,64 @@ export interface AdminStats {
   deliveriesByVehicle: { type: string; count: number }[]
 }
 
-// ── NegosyoAI types ───────────────────────────────────────────────────────────
-export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'expired'
-export type LeadStatus = 'new' | 'contacted' | 'converted' | 'inactive'
-export type AuditStatus = 'new' | 'pending' | 'completed'
-
-export interface Lead {
-  id?: string
-  name: string
-  business?: string
-  email: string
-  phone?: string
-  service?: string
-  message?: string
-  status?: LeadStatus
-  createdAt?: string
+// ── NegosyoAI type stubs (kept for backward compat) ──────────────────────────
+export interface AuditScores {
+  seo: number; performance: number; content: number; ux: number; overall: number
 }
-
+export type AuditAnswers = Record<string, string | string[] | boolean>
 export interface Payment {
   id: string
-  checkoutId?: string
-  planName?: string
+  status: string
   amount: number
-  customerName?: string
-  customerEmail?: string
-  customerPhone?: string
-  status: PaymentStatus
-  paymentMethod?: string
-  checkoutUrl?: string
-  createdAt?: string
-  updatedAt?: string
+  currency: string
+  createdAt: Date
+  updatedAt?: Date
+  [key: string]: unknown  // allows NegosyoAI-specific fields
 }
 
-export interface AuditRequest {
-  id?: string
-  name?: string
-  email: string
-  phone?: string
-  businessName?: string
-  city?: string
-  industry?: string
-  yearsInBusiness?: string
-  employees?: string
-  monthlyRevenue?: string
-  biggestChallenge?: string
-  answers?: AuditAnswers | Record<string, unknown>
-  scores?: AuditScores | Record<string, unknown>
-  score?: number
-  status?: AuditStatus
-  createdAt?: string
-}
-
-export interface AuditAnswers {
-  hasWebsite: string
-  isMobileFriendly: string
-  hasGoogleBusiness: string
-  platforms: string[]
-  postingFrequency: string
-  hasReviews: string
-  respondsToReviews: string
-  runningAds: string[]
-  primaryGoal: string
-  monthlyBudget: string
-}
-
-export interface AuditScores {
-  website: number
-  social: number
-  localSeo: number
-  reputation: number
-  advertising: number
-  overall: number
-}
-
-// ── Recurring Routes ──────────────────────────────────────────────────────────
+// ── VanRoute Pro — Recurring Routes ──────────────────────────────────────────
 export type RecurringFrequency = 'daily' | 'weekly' | 'biweekly' | 'monthly'
 export type WeekDay = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun'
 
 export interface RecurringRoute {
   id: string
   name: string
-  shipperId: string
-  shipperName: string
-  vehicleType: VehicleType
-  pickup: DeliveryLocation
-  dropoff: DeliveryLocation
+  driverId?: string
+  shipperId?: string
+  shipperName?: string
+  pickup: {
+    city: string
+    state: string
+    address: string
+    zip: string
+    lat?: number
+    lng?: number
+  }
+  dropoff: {
+    city: string
+    state: string
+    address: string
+    zip: string
+    lat?: number
+    lng?: number
+  }
   pickupTime: string
   deliveryTime: string
+  vehicleType: VehicleType
   frequency: RecurringFrequency
   daysOfWeek?: WeekDay[]
-  isActive: boolean
-  startDate: string
-  endDate?: string
-  nextRunDate: string
-  lastRunDate?: string
-  lastRunStatus?: 'completed' | 'missed' | 'pending'
-  totalRuns: number
   distance: number
-  description: string
-  totalCost: number
+  totalCost?: number
   driverPayout: number
-  liftGate?: boolean
-  loadingDock?: boolean
+  platformFee?: number
+  description?: string
+  isActive?: boolean
+  status?: 'active' | 'paused'
+  startDate?: string
+  nextRunDate?: string
+  nextRunAt?: Date
+  lastRunDate?: string
+  lastRunStatus?: string
+  totalRuns?: number
   createdAt: Date
 }

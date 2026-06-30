@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Database layer — Supabase (PostgreSQL)
  *

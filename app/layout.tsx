@@ -7,13 +7,12 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
 
 export const metadata: Metadata = {
   title: "VanRoute Pro — Live Delivery Logistics Network",
-  description:
-    "Find cargo van and sprinter van delivery opportunities in South Carolina, North Carolina, and Georgia. Live load board, built-in GPS routing, online payments.",
+  description: "Find cargo van and sprinter van delivery opportunities in South Carolina, North Carolina, and Georgia. Live load board, built-in GPS routing, online payments.",
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark scroll-smooth">
+    <html lang="en" className="dark">
       <body className={`${inter.variable} font-sans bg-slate-950 text-white antialiased`}>
         <Navbar />
         {children}
@@ -22,15 +21,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
               <div className="col-span-1 md:col-span-2">
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="text-xl font-bold text-white">
-                    Van<span className="text-orange-500">Route</span>{" "}
-                    <span className="text-slate-500 text-sm font-normal">Pro</span>
-                  </span>
+                  <span className="text-xl font-bold text-white">Van<span className="text-orange-500">Route</span> <span className="text-slate-500 text-sm font-normal">Pro</span></span>
                 </div>
-                <p className="text-slate-400 text-sm max-w-xs">
-                  Professional logistics network for cargo van and sprinter van
-                  owner-operators across SC, NC &amp; GA.
-                </p>
+                <p className="text-slate-400 text-sm max-w-xs">Professional logistics network for cargo van and sprinter van owner-operators across SC, NC & GA.</p>
                 <p className="text-slate-600 text-xs mt-4">USA Based · Serving the Southeast Region</p>
               </div>
               <div>
@@ -53,9 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </div>
             </div>
             <div className="mt-8 pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <p className="text-slate-600 text-xs">
-                © 2026 VanRoute Pro. All rights reserved. USA-based logistics platform.
-              </p>
+              <p className="text-slate-600 text-xs">© 2026 VanRoute Pro. All rights reserved. USA-based logistics platform.</p>
               <div className="flex items-center gap-4 text-xs text-slate-600">
                 <span>Cargo Vans</span>
                 <span>·</span>

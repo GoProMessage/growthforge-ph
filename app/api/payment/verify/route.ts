@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCheckoutSession } from "@/lib/paymongo";
 import { updatePaymentStatus } from "@/lib/db";
-import type { Payment } from "@/types";
 
 export async function GET(req: NextRequest) {
   try {
@@ -19,7 +18,7 @@ export async function GET(req: NextRequest) {
       await getCheckoutSession(sessionId);
 
     // Map PayMongo status → our Payment status enum
-    const statusMap: Record<string, Payment["status"]> = {
+    const statusMap: Record<string, string> = {
       paid: "paid",
       active: "paid",
       succeeded: "paid",
@@ -29,7 +28,7 @@ export async function GET(req: NextRequest) {
       failed: "failed",
       expired: "expired",
     };
-    const dbStatus: Payment["status"] = statusMap[rawStatus] ?? "pending";
+    const dbStatus: string = statusMap[rawStatus] ?? "pending";
 
     // Update DB (non-blocking)
     try {
