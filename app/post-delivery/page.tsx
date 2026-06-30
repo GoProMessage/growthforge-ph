@@ -61,6 +61,9 @@ export default function PostDeliveryPage() {
   const [form, setForm] = useState<FormData>(INITIAL)
   const [step, setStep] = useState(1)
   const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [postedDeliveryId, setPostedDeliveryId] = useState<string | null>(null)
 
   const set = (k: keyof FormData, v: any) => setForm(f => ({ ...f, [k]: v }))
 
@@ -77,9 +80,85 @@ export default function PostDeliveryPage() {
   const pickupCities = form.pickupState ? getCitiesByState(form.pickupState) : []
   const dropoffCities = form.dropoffState ? getCitiesByState(form.dropoffState) : []
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setSubmitted(true)
+    if (!pickupCityData || !dropoffCityData || !costs || !form.vehicleType) return
+    setSubmitting(true)
+    setSubmitError(null)
+
+    const id = `del-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+    const now = new Date()
+    const expiresAt = new Date(now.getTime() + 60 * 60 * 1000) // 60 min window
+
+    const delivery = {
+      id,
+      shipperId: `ship-${Date.now()}`,
+      shipperName: form.shipperName,
+      shipperCompany: form.shipperCompany || undefined,
+      vehicleType: form.vehicleType,
+      pickup: {
+        address: form.pickupAddress,
+        city: form.pickupCity,
+        state: form.pickupState,
+        zip: form.pickupZip,
+        lat: pickupCityData.lat,
+        lng: pickupCityData.lng,
+      },
+      dropoff: {
+        address: form.dropoffAddress,
+        city: form.dropoffCity,
+        state: form.dropoffState,
+        zip: form.dropoffZip,
+        lat: dropoffCityData.lat,
+        lng: dropoffCityData.lng,
+      },
+      pickupDate: form.pickupDate,
+      pickupTime: form.pickupTime,
+      deliveryDate: form.deliveryDate,
+      deliveryTime: form.deliveryTime,
+      distance: distance,
+      baseFee: costs.baseFee,
+      mileageRate: costs.mileageRate,
+      mileageCost: costs.mileageCost,
+      totalCost: costs.totalCost,
+      platformFee: costs.platformFee,
+      driverPayout: costs.driverPayout,
+      description: form.description,
+      weight: form.weight || undefined,
+      dimensions: form.dimensions || undefined,
+      specialInstructions: form.specialInstructions || undefined,
+      status: 'available',
+      isScheduled: form.isScheduled,
+      isUrgent: form.isUrgent,
+      liftGate: form.liftGate,
+      loadingDock: form.loadingDock,
+      postedAt: now.toISOString(),
+      expiresAt: expiresAt.toISOString(),
+      contactPhone: form.shipperPhone,
+      contactName: form.shipperName,
+      contactEmail: form.shipperEmail,
+      source: 'posted',
+    }
+
+    try {
+      const res = await fetch('/api/deliveries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(delivery),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        setSubmitError(data.error || 'Failed to post delivery. Please try again.')
+        setSubmitting(false)
+        return
+      }
+      setPostedDeliveryId(id)
+      setSubmitted(true)
+    } catch {
+      setSubmitError('Network error — please check your connection and try again.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   if (submitted) {
@@ -119,16 +198,23 @@ export default function PostDeliveryPage() {
             </div>
           )}
           <div className="flex flex-col sm:flex-row gap-3">
+            {postedDeliveryId && (
+              <Link href={`/opportunities/${postedDeliveryId}`} className="flex-1">
+                <Button className="w-full bg-orange-500 hover:bg-orange-400 text-white font-bold gap-2">
+                  View Your Load
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            )}
             <Link href="/opportunities" className="flex-1">
-              <Button className="w-full bg-orange-500 hover:bg-orange-400 text-white font-bold gap-2">
-                View Live Board
-                <ArrowRight className="h-4 w-4" />
+              <Button variant="outline" className="w-full border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 gap-2">
+                Live Board
               </Button>
             </Link>
             <Button
               variant="outline"
               className="flex-1 border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800"
-              onClick={() => { setSubmitted(false); setForm(INITIAL); setStep(1) }}
+              onClick={() => { setSubmitted(false); setForm(INITIAL); setStep(1); setPostedDeliveryId(null) }}
             >
               Post Another
             </Button>
@@ -439,11 +525,19 @@ export default function PostDeliveryPage() {
                     </CardContent>
                   </Card>
 
+                  {submitError && (
+                    <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 text-red-400 text-sm">
+                      {submitError}
+                    </div>
+                  )}
                   <div className="flex justify-between">
-                    <Button type="button" onClick={() => setStep(2)} variant="outline" className="border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800">Back</Button>
-                    <Button type="submit" className="bg-orange-500 hover:bg-orange-400 text-white font-bold gap-2 h-12 px-8">
-                      Post Delivery Live
-                      <ArrowRight className="h-4 w-4" />
+                    <Button type="button" onClick={() => setStep(2)} variant="outline" className="border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800" disabled={submitting}>Back</Button>
+                    <Button type="submit" disabled={submitting} className="bg-orange-500 hover:bg-orange-400 text-white font-bold gap-2 h-12 px-8 disabled:opacity-70">
+                      {submitting ? (
+                        <><div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Posting...</>
+                      ) : (
+                        <>Post Delivery Live <ArrowRight className="h-4 w-4" /></>
+                      )}
                     </Button>
                   </div>
                 </motion.div>
