@@ -1,0 +1,14 @@
+node_modules/
+.next/
+out/
+.env
+.env.local
+.env*.local
+.env.production
+data/
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.agent-browser/
+.vercel
