@@ -48,6 +48,8 @@ export interface Delivery {
   expiresAt: Date              // load disappears after this
   assignedDriverId?: string
   contactPhone?: string
+  contactName?: string
+  contactEmail?: string
   loadingDock?: boolean
   liftGate?: boolean
   source?: string              // 'OneRail' | 'direct' | 'posted'

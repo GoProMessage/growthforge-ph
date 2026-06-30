@@ -1,19 +1,22 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import dynamic from "next/dynamic"
 import { MOCK_DELIVERIES, MOCK_DRIVERS } from "@/lib/mock-data"
 import { formatCurrency, estimateDriveTime, VEHICLE_LABELS } from "@/lib/calculator"
 import { DriverProfileCard, DriverProfileData } from "@/components/driver-profile-card"
 import { Badge } from "@/components/ui/badge"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { claimLoad, isLoadClaimed } from "@/lib/claimed-store"
+import { formatTime12h } from "@/lib/calculator"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import {
   Truck, MapPin, Clock, DollarSign, Package, Phone, Calendar,
-  ArrowLeft, ArrowRight, Zap, CheckCircle, Shield, User,
-  Navigation, AlertCircle, Star, CreditCard, Percent,
+  ArrowLeft, ArrowRight, Zap, CheckCircle, Shield, User, Mail, CreditCard,
+  Navigation, AlertCircle, Star, Percent,
 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import Link from "next/link"
@@ -65,6 +68,15 @@ export default function DeliveryDetailPage() {
 
   const delivery = MOCK_DELIVERIES.find(d => d.id === id) || MOCK_DELIVERIES[0]
   const [claimed, setClaimed] = useState(false)
+  const [alreadyClaimed, setAlreadyClaimed] = useState(false)
+  const [contactOpen, setContactOpen] = useState(false)
+
+  useEffect(() => {
+    if (delivery && isLoadClaimed(delivery.id)) {
+      setAlreadyClaimed(true)
+      setClaimed(true)
+    }
+  }, [delivery?.id])
 
   if (!delivery) {
     return (
@@ -84,6 +96,7 @@ export default function DeliveryDetailPage() {
   const isOneRail = delivery.source === 'OneRail'
 
   return (
+    <>
     <div className="min-h-screen bg-slate-950">
       {/* Back Nav */}
       <div className="border-b border-slate-800 bg-slate-900/50">
@@ -352,19 +365,20 @@ export default function DeliveryDetailPage() {
 
             {/* CTA Buttons */}
             <div className="space-y-3">
+              {alreadyClaimed && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-center">
+                  <p className="text-red-400 font-bold text-sm">⚠️ This load has already been claimed</p>
+                </div>
+              )}
               {!claimed ? (
                 <>
-                  <Button onClick={() => setClaimed(true)}
-                    className="w-full bg-orange-500 hover:bg-orange-400 text-white font-bold h-12 text-base gap-2">
+                  <Button
+                    onClick={() => { claimLoad(delivery.id); setClaimed(true) }}
+                    disabled={alreadyClaimed}
+                    className="w-full bg-orange-500 hover:bg-orange-400 text-white font-bold h-12 text-base gap-2 disabled:opacity-50">
                     <CheckCircle className="h-5 w-5" />
-                    Claim This Load
+                    Claim This Load — Free
                   </Button>
-                  <Link href={`/payment/${delivery.id}`}>
-                    <Button variant="outline" className="w-full border-orange-500/40 text-orange-400 hover:bg-orange-500/10 h-11 gap-2 font-semibold">
-                      <CreditCard className="h-4 w-4" />
-                      Pay & Reserve Now
-                    </Button>
-                  </Link>
                 </>
               ) : (
                 <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 text-center space-y-2">
@@ -375,7 +389,7 @@ export default function DeliveryDetailPage() {
               )}
               <Button variant="outline"
                 className="w-full border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 h-11 gap-2"
-                onClick={() => delivery.contactPhone && window.open(`tel:${delivery.contactPhone}`)}>
+                onClick={() => setContactOpen(true)}>
                 <Phone className="h-4 w-4" />
                 Contact Shipper
               </Button>
@@ -413,5 +427,44 @@ export default function DeliveryDetailPage() {
         </div>
       </div>
     </div>
+
+    {/* Contact Shipper Dialog */}
+    <Dialog open={contactOpen} onOpenChange={setContactOpen}>
+      <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="text-white flex items-center gap-2">
+            <Phone className="h-5 w-5 text-orange-500" />
+            Contact Shipper
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 pt-2">
+          <div>
+            <p className="text-white font-semibold">{delivery.contactName ?? delivery.shipperName}</p>
+            <p className="text-slate-400 text-sm">{delivery.shipperCompany}</p>
+          </div>
+          {delivery.contactPhone && (
+            <>
+              <a href={`tel:${delivery.contactPhone}`}
+                className="flex items-center gap-3 bg-orange-500/10 border border-orange-500/30 rounded-lg p-3 hover:bg-orange-500/20 transition-colors">
+                <Phone className="h-5 w-5 text-orange-400 shrink-0" />
+                <div>
+                  <p className="text-orange-300 font-semibold text-sm">Tap to Call</p>
+                  <p className="text-white font-mono">{delivery.contactPhone}</p>
+                </div>
+              </a>
+              <a href={`sms:${delivery.contactPhone}`}
+                className="flex items-center gap-3 bg-slate-800 border border-slate-700 rounded-lg p-3 hover:bg-slate-700 transition-colors">
+                <Mail className="h-5 w-5 text-slate-400 shrink-0" />
+                <div>
+                  <p className="text-slate-300 font-semibold text-sm">Send SMS</p>
+                  <p className="text-slate-400 text-sm">{delivery.contactPhone}</p>
+                </div>
+              </a>
+            </>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   )
 }
