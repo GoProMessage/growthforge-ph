@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import dynamic from "next/dynamic"
-import { MOCK_DELIVERIES, MOCK_DRIVERS } from "@/lib/mock-data"
+import { MOCK_DRIVERS } from "@/lib/mock-data"
 import { formatCurrency, estimateDriveTime, VEHICLE_LABELS } from "@/lib/calculator"
 import { DriverProfileCard, DriverProfileData } from "@/components/driver-profile-card"
 import { Badge } from "@/components/ui/badge"
@@ -66,10 +66,29 @@ export default function DeliveryDetailPage() {
   const router = useRouter()
   const id = params.id as string
 
-  const delivery = MOCK_DELIVERIES.find(d => d.id === id) || MOCK_DELIVERIES[0]
+  const [delivery, setDelivery] = useState<import("@/types").Delivery | null>(null)
+  const [loadingDelivery, setLoadingDelivery] = useState(true)
   const [claimed, setClaimed] = useState(false)
   const [alreadyClaimed, setAlreadyClaimed] = useState(false)
   const [contactOpen, setContactOpen] = useState(false)
+
+  // Fetch delivery from API
+  useEffect(() => {
+    setLoadingDelivery(true)
+    fetch(`/api/deliveries/${id}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.delivery) {
+          setDelivery({
+            ...data.delivery,
+            postedAt: new Date(data.delivery.postedAt),
+            expiresAt: new Date(data.delivery.expiresAt),
+          })
+        }
+      })
+      .catch(err => console.error('Failed to load delivery:', err))
+      .finally(() => setLoadingDelivery(false))
+  }, [id])
 
   useEffect(() => {
     if (delivery && isLoadClaimed(delivery.id)) {
@@ -77,6 +96,17 @@ export default function DeliveryDetailPage() {
       setClaimed(true)
     }
   }, [delivery?.id])
+
+  if (loadingDelivery) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-slate-400">Loading load details...</p>
+        </div>
+      </div>
+    )
+  }
 
   if (!delivery) {
     return (
@@ -373,7 +403,17 @@ export default function DeliveryDetailPage() {
               {!claimed ? (
                 <>
                   <Button
-                    onClick={() => { claimLoad(delivery.id); setClaimed(true) }}
+                    onClick={async () => {
+                        claimLoad(delivery.id)
+                        setClaimed(true)
+                        setAlreadyClaimed(true)
+                        // Persist to Supabase
+                        await fetch(`/api/deliveries/${delivery.id}/claim`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({}),
+                        }).catch(() => {}) // silently fail — localStorage claim still works
+                      }}
                     disabled={alreadyClaimed}
                     className="w-full bg-orange-500 hover:bg-orange-400 text-white font-bold h-12 text-base gap-2 disabled:opacity-50">
                     <CheckCircle className="h-5 w-5" />

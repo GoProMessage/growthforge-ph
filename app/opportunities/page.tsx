@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { MOCK_DELIVERIES, generateNewDelivery } from "@/lib/mock-data"
+import { generateNewDelivery } from "@/lib/mock-data"
 import { DeliveryCard } from "@/components/delivery-card"
 import { ShareModal } from "@/components/share-modal"
 import { Badge } from "@/components/ui/badge"
@@ -39,9 +39,8 @@ function expiryLabel(d: Delivery): { text: string; urgent: boolean } {
 }
 
 export default function OpportunitiesPage() {
-  const [deliveries, setDeliveries] = useState<Delivery[]>(() =>
-    [...MOCK_DELIVERIES].filter(d => msLeft(d) > 0)
-  )
+  const [deliveries, setDeliveries] = useState<Delivery[]>([])
+  const [loading, setLoading] = useState(true)
   const [newDeliveryIds, setNewDeliveryIds] = useState<Set<string>>(new Set())
   const [search, setSearch] = useState('')
   const [stateFilter, setStateFilter] = useState<string>('all')
@@ -58,6 +57,24 @@ export default function OpportunitiesPage() {
   useEffect(() => {
     const iv = setInterval(() => setScanPulse(p => !p), 1500)
     return () => clearInterval(iv)
+  }, [])
+
+  // ── Initial load from API (Supabase) ──────────────────────────────────
+  useEffect(() => {
+    setLoading(true)
+    fetch('/api/deliveries')
+      .then(r => r.json())
+      .then(data => {
+        if (data.deliveries) {
+          setDeliveries(data.deliveries.map((d: Delivery) => ({
+            ...d,
+            postedAt: new Date(d.postedAt),
+            expiresAt: new Date(d.expiresAt),
+          })).filter((d: Delivery) => msLeft(d) > 0))
+        }
+      })
+      .catch(err => console.error('Failed to load deliveries:', err))
+      .finally(() => setLoading(false))
   }, [])
 
   // ── Expiry: purge expired loads every 30 seconds + update countdowns ──
@@ -100,18 +117,30 @@ export default function OpportunitiesPage() {
 
   const handleRefresh = useCallback(() => {
     setIsRefreshing(true)
-    setTimeout(() => {
-      const nd = generateNewDelivery()
-      setDeliveries(prev => {
-        const active = prev.filter(d => msLeft(d) > 0)
-        return [nd, ...active]
+    fetch('/api/deliveries')
+      .then(r => r.json())
+      .then(data => {
+        if (data.deliveries) {
+          const fresh = data.deliveries.map((d: Delivery) => ({
+            ...d,
+            postedAt: new Date(d.postedAt),
+            expiresAt: new Date(d.expiresAt),
+          })).filter((d: Delivery) => msLeft(d) > 0)
+          const currentIds = new Set(deliveries.map(d => d.id))
+          const newOnes = fresh.filter((d: Delivery) => !currentIds.has(d.id))
+          setDeliveries(fresh)
+          if (newOnes.length > 0) {
+            newOnes.forEach((d: Delivery) => setNewDeliveryIds(prev => new Set(prev).add(d.id)))
+            setNotification({ text: `Scan complete — ${newOnes.length} new load${newOnes.length > 1 ? 's' : ''} found`, type: 'new' })
+          } else {
+            setNotification({ text: 'Board refreshed — all loads current', type: 'info' })
+          }
+          setTimeout(() => setNotification(null), 4000)
+        }
       })
-      setNewDeliveryIds(prev => new Set(prev).add(nd.id))
-      setIsRefreshing(false)
-      setNotification({ text: `Scan complete — new load found`, type: 'new' })
-      setTimeout(() => setNotification(null), 4000)
-    }, 1200)
-  }, [])
+      .catch(() => setNotification({ text: 'Refresh failed — check connection', type: 'expire' }))
+      .finally(() => setIsRefreshing(false))
+  }, [deliveries])
 
   // ── Filtering & sorting ────────────────────────────────────────────────
   const filtered = deliveries
@@ -280,7 +309,17 @@ export default function OpportunitiesPage() {
         </div>
 
         {/* Load cards */}
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="bg-slate-900 border border-slate-800 rounded-xl p-5 animate-pulse">
+                <div className="h-4 bg-slate-800 rounded w-3/4 mb-3" />
+                <div className="h-3 bg-slate-800 rounded w-1/2 mb-2" />
+                <div className="h-3 bg-slate-800 rounded w-2/3" />
+              </div>
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="text-center py-20">
             <Search className="h-12 w-12 text-slate-700 mx-auto mb-4" />
             <p className="text-slate-400 text-lg font-semibold">No loads match your filters</p>
