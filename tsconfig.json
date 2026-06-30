@@ -37,6 +37,7 @@
   "exclude": [
     "node_modules",
     "growthforge-ph",
-    "magica"
+    "magica",
+    "negosyo-ai"
   ]
 }
